@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -102,6 +103,7 @@ const teamMembers = [
 
 export const ReviewsPage: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
@@ -329,12 +331,20 @@ export const ReviewsPage: React.FC = () => {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => navigate(`/reviews/${review.id}`)}
+                  >
                     View Details
                   </Button>
                   {(user?.id === review.userId || user?.id === review.managerId || user?.role === 'admin') && 
                    review.status !== 'complete' && (
-                    <Button size="sm" className="bg-gradient-primary hover:opacity-90">
+                    <Button 
+                      size="sm" 
+                      className="bg-gradient-primary hover:opacity-90"
+                      onClick={() => navigate(`/reviews/${review.id}`)}
+                    >
                       {user?.id === review.userId ? 'Complete Self Review' : 'Complete Manager Review'}
                     </Button>
                   )}
