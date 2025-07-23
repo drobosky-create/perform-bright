@@ -13,6 +13,7 @@ import { ReviewFormPage } from "@/components/reviews/ReviewFormPage";
 import { CreateReviewPage } from "@/components/reviews/CreateReviewPage";
 import { ReviewDashboard } from "@/components/reviews/ReviewDashboard";
 import { SettingsPage } from "@/components/settings/SettingsPage";
+import { ReportsPage } from "@/components/reports/ReportsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -77,6 +78,11 @@ const App = () => (
             <Route path="/settings" element={
               <ProtectedRoute>
                 <SettingsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/reports" element={
+              <ProtectedRoute>
+                <ReportsPage />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />
