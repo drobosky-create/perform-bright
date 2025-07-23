@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,111 +28,91 @@ import {
   Trash2,
   Mail,
   Calendar,
-  Network
+  Network,
+  Briefcase,
+  Phone
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, UserRole } from '@/types/auth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { OrgChart } from './OrgChart';
+import { ProfileEditDialog } from '@/components/profile/ProfileEditDialog';
+import { ProfileViewDialog } from '@/components/profile/ProfileViewDialog';
 
-// Mock team data - would come from API
-const mockTeamMembers: User[] = [
-  {
-    id: '1',
-    email: 'admin@company.com',
-    name: 'Sarah Johnson',
-    role: 'admin',
-    department: 'HR',
-    employmentType: 'employee',
-    reviewCadence: 'quarterly',
-    createdAt: new Date('2024-01-01'),
-    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b332c1b1?w=150&h=150&fit=crop&crop=face'
-  },
-  {
-    id: '2',
-    email: 'manager@company.com',
-    name: 'Michael Chen',
-    role: 'manager',
-    department: 'Engineering',
-    employmentType: 'employee',
-    reviewCadence: 'quarterly',
-    createdAt: new Date('2024-01-01'),
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
-  },
-  {
-    id: '3',
-    email: 'team@company.com',
-    name: 'Alex Rivera',
-    role: 'team_member',
-    department: 'Engineering',
-    managerId: '2',
-    employmentType: 'employee',
-    reviewCadence: 'monthly',
-    createdAt: new Date('2024-01-01'),
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
-  },
-  {
-    id: '4',
-    email: 'jennifer.wu@company.com',
-    name: 'Jennifer Wu',
-    role: 'team_member',
-    department: 'Design',
-    managerId: '2',
-    employmentType: 'contractor',
-    reviewCadence: 'quarterly',
-    createdAt: new Date('2024-02-15'),
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face'
-  },
-  {
-    id: '5',
-    email: 'david.chen@company.com',
-    name: 'David Chen',
-    role: 'team_member',
-    department: 'Marketing',
-    managerId: '1',
-    employmentType: 'employee',
-    reviewCadence: 'quarterly',
-    createdAt: new Date('2024-03-01'),
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face'
-  }
-];
+interface TeamMember {
+  id: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  department: string | null;
+  job_title: string | null;
+  photo_url: string | null;
+  created_at: string;
+}
 
 export const TeamDirectory: React.FC = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedProfile, setSelectedProfile] = useState<TeamMember | null>(null);
+  const [showProfileView, setShowProfileView] = useState(false);
+  const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
+
+  // Fetch team members from Supabase
+  useEffect(() => {
+    const fetchTeamMembers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setTeamMembers(data || []);
+      } catch (error: any) {
+        toast({
+          title: 'Error',
+          description: 'Failed to load team members',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTeamMembers();
+  }, [toast]);
 
   // Get unique departments for filter
-  const departments = Array.from(new Set(mockTeamMembers.map(member => member.department).filter(Boolean)));
+  const departments = Array.from(new Set(teamMembers.map(member => member.department).filter(Boolean)));
 
   // Filter team members
-  const filteredMembers = mockTeamMembers.filter(member => {
-    const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         member.email.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredMembers = teamMembers.filter(member => {
+    const matchesSearch = 
+      (member.name?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+      (member.email?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
     const matchesDepartment = departmentFilter === 'all' || member.department === departmentFilter;
-    const matchesRole = roleFilter === 'all' || member.role === roleFilter;
     
-    return matchesSearch && matchesDepartment && matchesRole;
+    return matchesSearch && matchesDepartment;
   });
 
-  const getRoleBadgeVariant = (role: UserRole) => {
-    switch (role) {
-      case 'admin': return 'default';
-      case 'manager': return 'secondary';
-      case 'team_member': return 'outline';
-      default: return 'outline';
-    }
+  const handleViewProfile = (member: TeamMember) => {
+    setSelectedProfile(member);
+    setShowProfileView(true);
   };
 
-  const getEmploymentBadgeVariant = (type: string) => {
-    return type === 'employee' ? 'default' : 'secondary';
+  const handleEditProfile = (member: TeamMember) => {
+    setEditingProfileId(member.id);
+    setShowProfileEdit(true);
   };
 
-  const canManageUser = (targetUser: User) => {
-    if (user?.role === 'admin') return true;
-    if (user?.role === 'manager' && targetUser.managerId === user.id) return true;
-    return false;
+  const canEditProfile = (member: TeamMember) => {
+    // Users can edit their own profile, or if they're an admin
+    return member.id === user?.id || profile?.id === user?.id;
   };
 
   return (
@@ -143,12 +123,13 @@ export const TeamDirectory: React.FC = () => {
           <h1 className="text-3xl font-semibold text-foreground">Team Directory</h1>
           <p className="text-foreground-muted mt-1">Manage your team members and their review settings</p>
         </div>
-        {user?.role === 'admin' && (
-          <Button className="gap-2 bg-gradient-primary hover:opacity-90" onClick={() => setShowAddUserModal(true)}>
-            <Plus className="h-4 w-4" />
-            Add Team Member
-          </Button>
-        )}
+        <Button 
+          className="gap-2 bg-gradient-primary hover:opacity-90" 
+          onClick={() => handleEditProfile({ id: user?.id || '', name: profile?.name, email: profile?.email, phone: profile?.phone, department: profile?.department, job_title: profile?.job_title, photo_url: profile?.photo_url, created_at: new Date().toISOString() })}
+        >
+          <Edit className="h-4 w-4" />
+          Edit My Profile
+        </Button>
       </div>
 
       {/* Tabs for Directory and Org Chart */}
@@ -194,123 +175,130 @@ export const TeamDirectory: React.FC = () => {
                   </SelectContent>
                 </Select>
 
-                {/* Role Filter */}
-                <Select value={roleFilter} onValueChange={setRoleFilter}>
-                  <SelectTrigger className="w-full sm:w-48">
-                    <SelectValue placeholder="Role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Roles</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="team_member">Team Member</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </CardContent>
           </Card>
 
           {/* Team Members Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredMembers.map((member) => (
-              <Card key={member.id} className="shadow-soft border-border-soft hover:shadow-soft-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="shadow-soft border-border-soft">
+                  <CardHeader className="pb-3">
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={member.avatar} alt={member.name} />
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {member.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <CardTitle className="text-base">{member.name}</CardTitle>
-                        <CardDescription className="text-sm">{member.email}</CardDescription>
+                      <div className="h-10 w-10 bg-muted rounded-full animate-pulse" />
+                      <div className="space-y-2">
+                        <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+                        <div className="h-3 w-32 bg-muted rounded animate-pulse" />
                       </div>
                     </div>
-                    {canManageUser(member) && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Mail className="mr-2 h-4 w-4" />
-                            Send Email
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Remove
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="h-6 w-20 bg-muted rounded animate-pulse" />
+                    <div className="h-4 w-16 bg-muted rounded animate-pulse" />
+                    <div className="h-3 w-28 bg-muted rounded animate-pulse" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredMembers.map((member) => (
+                <Card 
+                  key={member.id} 
+                  className="shadow-soft border-border-soft hover:shadow-soft-md transition-shadow cursor-pointer"
+                  onClick={() => handleViewProfile(member)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={member.photo_url || undefined} alt={member.name || ''} />
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            {member.name?.split(' ').map(n => n[0]).join('') || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <CardTitle className="text-base">{member.name || 'No name set'}</CardTitle>
+                          <CardDescription className="text-sm">{member.email}</CardDescription>
+                        </div>
+                      </div>
+                      {canEditProfile(member) && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditProfile(member);
+                            }}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit Profile
+                            </DropdownMenuItem>
+                            {member.email && (
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(`mailto:${member.email}`, '_blank');
+                              }}>
+                                <Mail className="mr-2 h-4 w-4" />
+                                Send Email
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {/* Job Title */}
+                    {member.job_title && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Briefcase className="h-3 w-3" />
+                        {member.job_title}
+                      </div>
                     )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {/* Role & Employment */}
-                  <div className="flex gap-2">
-                    <Badge variant={getRoleBadgeVariant(member.role)}>
-                      {member.role.replace('_', ' ').toUpperCase()}
-                    </Badge>
-                    <Badge variant={getEmploymentBadgeVariant(member.employmentType)}>
-                      {member.employmentType}
-                    </Badge>
-                  </div>
 
-                  {/* Department */}
-                  {member.department && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Users className="h-3 w-3" />
-                      {member.department}
+                    {/* Department */}
+                    {member.department && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Users className="h-3 w-3" />
+                        {member.department}
+                      </div>
+                    )}
+
+                    {/* Phone */}
+                    {member.phone && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Phone className="h-3 w-3" />
+                        {member.phone}
+                      </div>
+                    )}
+
+                    {/* Member since */}
+                    <div className="text-xs text-muted-foreground">
+                      Member since {new Date(member.created_at).toLocaleDateString()}
                     </div>
-                  )}
-
-                  {/* Review Cadence */}
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    {member.reviewCadence} reviews
-                  </div>
-
-                  {/* Manager */}
-                  {member.managerId && (
-                    <div className="text-sm text-muted-foreground">
-                      Reports to: {mockTeamMembers.find(m => m.id === member.managerId)?.name}
-                    </div>
-                  )}
-
-                  {/* Member since */}
-                  <div className="text-xs text-muted-foreground">
-                    Member since {member.createdAt.toLocaleDateString()}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
 
           {/* Empty State */}
-          {filteredMembers.length === 0 && (
+          {!isLoading && filteredMembers.length === 0 && (
             <Card className="shadow-soft border-border-soft">
               <CardContent className="pt-8 pb-8 text-center">
                 <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-foreground mb-2">No team members found</h3>
                 <p className="text-muted-foreground mb-4">
-                  {searchQuery || departmentFilter !== 'all' || roleFilter !== 'all' 
+                  {searchQuery || departmentFilter !== 'all' 
                     ? "Try adjusting your search or filters"
-                    : "Get started by adding your first team member"
+                    : "Complete your profile to appear in the team directory"
                   }
                 </p>
-                {user?.role === 'admin' && (
-                  <Button onClick={() => setShowAddUserModal(true)}>
-                    Add Team Member
-                  </Button>
-                )}
               </CardContent>
             </Card>
           )}
@@ -329,11 +317,39 @@ export const TeamDirectory: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <OrgChart teamMembers={mockTeamMembers} />
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Org chart feature coming soon</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Profile Dialogs */}
+      <ProfileViewDialog
+        open={showProfileView}
+        onOpenChange={setShowProfileView}
+        profile={selectedProfile}
+        canEdit={selectedProfile ? canEditProfile(selectedProfile) : false}
+        onEdit={() => {
+          if (selectedProfile) {
+            setShowProfileView(false);
+            handleEditProfile(selectedProfile);
+          }
+        }}
+      />
+
+      <ProfileEditDialog
+        open={showProfileEdit}
+        onOpenChange={(open) => {
+          setShowProfileEdit(open);
+          if (!open) {
+            setEditingProfileId(null);
+          }
+        }}
+        isOwnProfile={editingProfileId === user?.id}
+        profileId={editingProfileId || undefined}
+      />
     </div>
   );
 };
