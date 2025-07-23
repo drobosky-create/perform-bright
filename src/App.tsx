@@ -15,6 +15,7 @@ import { CreateReviewPage } from "@/components/reviews/CreateReviewPage";
 import { ReviewDashboard } from "@/components/reviews/ReviewDashboard";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import { ReportsPage } from "@/components/reports/ReportsPage";
+import { GoalsPage } from "@/components/goals/GoalsPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import NotFound from "./pages/NotFound";
 
@@ -86,6 +87,11 @@ const App = () => (
             <Route path="/reports" element={
               <ProtectedRoute>
                 <ReportsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/goals" element={
+              <ProtectedRoute>
+                <GoalsPage />
               </ProtectedRoute>
             } />
             <Route path="/notifications" element={

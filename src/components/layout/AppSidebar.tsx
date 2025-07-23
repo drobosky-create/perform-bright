@@ -9,7 +9,8 @@ import {
   BarChart3,
   Building2,
   LogOut,
-  User
+  User,
+  Target
 } from "lucide-react";
 
 import {
@@ -65,6 +66,12 @@ const navigationItems: NavItem[] = [
     url: "/reports",
     icon: BarChart3,
     roles: ["admin", "manager"]
+  },
+  {
+    title: "Goals",
+    url: "/goals",
+    icon: Target,
+    roles: ["admin", "manager", "team_member"]
   },
   {
     title: "Settings",
