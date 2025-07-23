@@ -9,10 +9,10 @@ All colors MUST be HSL for customization flexibility.
 
 @layer base {
   :root {
-    /* Brand Colors - Easily customizable for white-label */
-    --brand-primary: 220 70% 50%;
-    --brand-secondary: 250 60% 65%;
-    --brand-accent: 200 80% 60%;
+    /* Brand Colors - Navy to Gray Palette */
+    --brand-primary: 210 100% 12%; /* Deep navy #0a192f */
+    --brand-secondary: 210 10% 45%; /* Medium gray #6c757d */
+    --brand-accent: 210 20% 25%; /* Steel accent */
     
     /* Surface Colors with Subtle Depth */
     --background: 0 0% 100%;
