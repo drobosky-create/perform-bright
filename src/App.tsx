@@ -11,6 +11,7 @@ import { TeamDirectory } from "@/components/team/TeamDirectory";
 import { ReviewsPage } from "@/components/reviews/ReviewsPage";
 import { ReviewFormPage } from "@/components/reviews/ReviewFormPage";
 import { CreateReviewPage } from "@/components/reviews/CreateReviewPage";
+import { ReviewDashboard } from "@/components/reviews/ReviewDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -60,6 +61,11 @@ const App = () => (
             <Route path="/reviews/create" element={
               <ProtectedRoute>
                 <CreateReviewPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/reviews/dashboard" element={
+              <ProtectedRoute>
+                <ReviewDashboard />
               </ProtectedRoute>
             } />
             <Route path="/reviews/:reviewId" element={

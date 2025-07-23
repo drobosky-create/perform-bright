@@ -24,7 +24,8 @@ import {
   CheckCircle,
   Star,
   Upload,
-  Filter
+  Filter,
+  BarChart3
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Review, ReviewStatus, ReviewType } from '@/types/review';
@@ -188,15 +189,27 @@ export const ReviewsPage: React.FC = () => {
           <h1 className="text-3xl font-semibold text-foreground">Performance Reviews</h1>
           <p className="text-foreground-muted mt-1">Track and manage team performance evaluations</p>
         </div>
-        {(user?.role === 'admin' || user?.role === 'manager') && (
-          <Button 
-            className="gap-2 bg-gradient-primary hover:opacity-90"
-            onClick={() => navigate('/reviews/create')}
-          >
-            <Plus className="h-4 w-4" />
-            Create Review
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {(user?.role === 'admin' || user?.role === 'manager') && (
+            <>
+              <Button 
+                variant="outline"
+                className="gap-2"
+                onClick={() => navigate('/reviews/dashboard')}
+              >
+                <BarChart3 className="h-4 w-4" />
+                Analytics
+              </Button>
+              <Button 
+                className="gap-2 bg-gradient-primary hover:opacity-90"
+                onClick={() => navigate('/reviews/create')}
+              >
+                <Plus className="h-4 w-4" />
+                Create Review
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Stats Cards */}
