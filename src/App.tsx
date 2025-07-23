@@ -17,6 +17,13 @@ import { ReviewDashboard } from "@/components/reviews/ReviewDashboard";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import { ReportsPage } from "@/components/reports/ReportsPage";
 import { GoalsPage } from "@/components/goals/GoalsPage";
+import { HowToPage } from "@/components/help/HowToPage";
+import { GettingStartedGuide } from "@/components/help/guides/GettingStartedGuide";
+import { ReviewsGuide } from "@/components/help/guides/ReviewsGuide";
+import { TeamGuide } from "@/components/help/guides/TeamGuide";
+import { GoalsGuide } from "@/components/help/guides/GoalsGuide";
+import { ReportsGuide } from "@/components/help/guides/ReportsGuide";
+import { SettingsGuide } from "@/components/help/guides/SettingsGuide";
 import NotificationsPage from "./pages/NotificationsPage";
 import NotFound from "./pages/NotFound";
 
@@ -99,6 +106,41 @@ const App = () => (
             <Route path="/notifications" element={
               <ProtectedRoute>
                 <NotificationsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/help" element={
+              <ProtectedRoute>
+                <HowToPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/help/getting-started" element={
+              <ProtectedRoute>
+                <GettingStartedGuide />
+              </ProtectedRoute>
+            } />
+            <Route path="/help/reviews" element={
+              <ProtectedRoute>
+                <ReviewsGuide />
+              </ProtectedRoute>
+            } />
+            <Route path="/help/team" element={
+              <ProtectedRoute>
+                <TeamGuide />
+              </ProtectedRoute>
+            } />
+            <Route path="/help/goals" element={
+              <ProtectedRoute>
+                <GoalsGuide />
+              </ProtectedRoute>
+            } />
+            <Route path="/help/reports" element={
+              <ProtectedRoute>
+                <ReportsGuide />
+              </ProtectedRoute>
+            } />
+            <Route path="/help/settings" element={
+              <ProtectedRoute>
+                <SettingsGuide />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

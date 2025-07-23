@@ -10,7 +10,8 @@ import {
   Building2,
   LogOut,
   User,
-  Target
+  Target,
+  HelpCircle
 } from "lucide-react";
 
 import {
@@ -78,6 +79,12 @@ const navigationItems: NavItem[] = [
     url: "/settings",
     icon: Settings,
     roles: ["admin"]
+  },
+  {
+    title: "Help",
+    url: "/help",
+    icon: HelpCircle,
+    roles: ["admin", "manager", "team_member"]
   }
 ];
 
