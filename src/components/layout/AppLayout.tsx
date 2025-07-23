@@ -15,12 +15,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-screen flex w-full bg-background-subtle">
         <AppSidebar />
         
         <div className="flex-1 flex flex-col">
           {/* Top Bar */}
-          <header className="h-16 border-b border-border bg-card shadow-sm flex items-center justify-between px-6">
+          <header className="h-16 border-b border-border-soft bg-surface shadow-soft flex items-center justify-between px-6">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="hover:bg-muted rounded-lg p-2 transition-colors" />
               
