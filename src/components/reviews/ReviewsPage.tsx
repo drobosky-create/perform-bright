@@ -189,7 +189,10 @@ export const ReviewsPage: React.FC = () => {
           <p className="text-foreground-muted mt-1">Track and manage team performance evaluations</p>
         </div>
         {(user?.role === 'admin' || user?.role === 'manager') && (
-          <Button className="gap-2 bg-gradient-primary hover:opacity-90">
+          <Button 
+            className="gap-2 bg-gradient-primary hover:opacity-90"
+            onClick={() => navigate('/reviews/create')}
+          >
             <Plus className="h-4 w-4" />
             Create Review
           </Button>
@@ -368,7 +371,10 @@ export const ReviewsPage: React.FC = () => {
               }
             </p>
             {(user?.role === 'admin' || user?.role === 'manager') && (
-              <Button className="bg-gradient-primary hover:opacity-90">
+              <Button 
+                className="bg-gradient-primary hover:opacity-90"
+                onClick={() => navigate('/reviews/create')}
+              >
                 Create First Review
               </Button>
             )}

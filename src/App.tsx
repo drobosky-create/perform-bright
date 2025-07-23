@@ -10,6 +10,7 @@ import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
 import { TeamDirectory } from "@/components/team/TeamDirectory";
 import { ReviewsPage } from "@/components/reviews/ReviewsPage";
 import { ReviewFormPage } from "@/components/reviews/ReviewFormPage";
+import { CreateReviewPage } from "@/components/reviews/CreateReviewPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,11 @@ const App = () => (
             <Route path="/reviews" element={
               <ProtectedRoute>
                 <ReviewsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/reviews/create" element={
+              <ProtectedRoute>
+                <CreateReviewPage />
               </ProtectedRoute>
             } />
             <Route path="/reviews/:reviewId" element={
