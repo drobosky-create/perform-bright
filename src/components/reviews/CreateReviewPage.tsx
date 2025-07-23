@@ -40,10 +40,56 @@ export const CreateReviewPage: React.FC = () => {
   
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [reviewType, setReviewType] = useState<ReviewType>('monthly');
-  const [period, setPeriod] = useState('');
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
+  const [selectedQuarter, setSelectedQuarter] = useState<string>('Q1');
   const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
   const [instructions, setInstructions] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Generate available years (current year and next 2 years)
+  const availableYears = Array.from({ length: 3 }, (_, i) => {
+    const year = new Date().getFullYear() + i;
+    return year.toString();
+  });
+
+  // Generate months
+  const months = [
+    { value: '1', label: 'January' },
+    { value: '2', label: 'February' },
+    { value: '3', label: 'March' },
+    { value: '4', label: 'April' },
+    { value: '5', label: 'May' },
+    { value: '6', label: 'June' },
+    { value: '7', label: 'July' },
+    { value: '8', label: 'August' },
+    { value: '9', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' }
+  ];
+
+  // Generate quarters
+  const quarters = [
+    { value: 'Q1', label: 'Q1 (Jan-Mar)' },
+    { value: 'Q2', label: 'Q2 (Apr-Jun)' },
+    { value: 'Q3', label: 'Q3 (Jul-Sep)' },
+    { value: 'Q4', label: 'Q4 (Oct-Dec)' }
+  ];
+
+  // Generate the period string based on review type
+  const getPeriod = () => {
+    switch (reviewType) {
+      case 'monthly':
+        return `${selectedYear}-${selectedMonth.padStart(2, '0')}`;
+      case 'quarterly':
+        return `${selectedYear}-${selectedQuarter}`;
+      case 'annual':
+        return selectedYear;
+      default:
+        return '';
+    }
+  };
 
   // Filter team members based on user role
   const availableMembers = mockTeamMembers.filter(member => {
@@ -51,7 +97,6 @@ export const CreateReviewPage: React.FC = () => {
     if (user?.role === 'manager') return member.managerId === user.id;
     return false;
   });
-
   const handleMemberToggle = (memberId: string) => {
     setSelectedMembers(prev => 
       prev.includes(memberId) 
@@ -87,10 +132,11 @@ export const CreateReviewPage: React.FC = () => {
       return;
     }
 
+    const period = getPeriod();
     if (!period) {
       toast({
         title: "Period required",
-        description: "Please enter a review period.",
+        description: "Please select a valid review period.",
         variant: "destructive"
       });
       return;
@@ -104,7 +150,7 @@ export const CreateReviewPage: React.FC = () => {
       
       toast({
         title: "Reviews created successfully",
-        description: `Created ${selectedMembers.length} review(s) for ${period}`,
+        description: `Created ${selectedMembers.length} review(s) for ${getPeriod()}`,
       });
 
       navigate('/reviews');
@@ -169,13 +215,100 @@ export const CreateReviewPage: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="period">Review Period</Label>
-                <Input
-                  id="period"
-                  placeholder="e.g., 2024-Q1, 2024-12, 2024"
-                  value={period}
-                  onChange={(e) => setPeriod(e.target.value)}
-                />
+                <Label>Review Period</Label>
+                <div className="space-y-3">
+                  {reviewType === 'monthly' && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Month</Label>
+                        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {months.map((month) => (
+                              <SelectItem key={month.value} value={month.value}>
+                                {month.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Year</Label>
+                        <Select value={selectedYear} onValueChange={setSelectedYear}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableYears.map((year) => (
+                              <SelectItem key={year} value={year}>
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+
+                  {reviewType === 'quarterly' && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Quarter</Label>
+                        <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {quarters.map((quarter) => (
+                              <SelectItem key={quarter.value} value={quarter.value}>
+                                {quarter.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Year</Label>
+                        <Select value={selectedYear} onValueChange={setSelectedYear}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableYears.map((year) => (
+                              <SelectItem key={year} value={year}>
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+
+                  {reviewType === 'annual' && (
+                    <div>
+                      <Label className="text-sm text-muted-foreground">Year</Label>
+                      <Select value={selectedYear} onValueChange={setSelectedYear}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableYears.map((year) => (
+                            <SelectItem key={year} value={year}>
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  <div className="text-sm text-muted-foreground">
+                    Period: <span className="font-medium">{getPeriod()}</span>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-2">
