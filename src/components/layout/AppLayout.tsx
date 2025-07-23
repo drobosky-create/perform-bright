@@ -1,10 +1,10 @@
 import React from 'react';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from './AppSidebar';
-import { Bell, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
+import { NotificationPanel } from '@/components/notifications/NotificationPanel';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -36,10 +36,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
             <div className="flex items-center gap-3">
               {/* Notifications */}
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="h-4 w-4" />
-                <span className="absolute -top-1 -right-1 h-2 w-2 bg-destructive rounded-full"></span>
-              </Button>
+              <NotificationPanel />
               
               {/* User Info */}
               <div className="hidden sm:flex items-center gap-2 text-sm">

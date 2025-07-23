@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
@@ -14,6 +15,7 @@ import { CreateReviewPage } from "@/components/reviews/CreateReviewPage";
 import { ReviewDashboard } from "@/components/reviews/ReviewDashboard";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import { ReportsPage } from "@/components/reports/ReportsPage";
+import NotificationsPage from "./pages/NotificationsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,10 +36,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AuthProvider>
+          <NotificationProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={
@@ -85,9 +88,15 @@ const App = () => (
                 <ReportsPage />
               </ProtectedRoute>
             } />
+            <Route path="/notifications" element={
+              <ProtectedRoute>
+                <NotificationsPage />
+              </ProtectedRoute>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+          </NotificationProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
