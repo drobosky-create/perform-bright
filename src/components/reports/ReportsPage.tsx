@@ -4,11 +4,89 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Download, Users, TrendingUp, TrendingDown, BarChart3, FileText, Clock } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Calendar, Download, Users, TrendingUp, TrendingDown, BarChart3, FileText, Clock, Search, User } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Area, AreaChart } from "recharts";
 import { useAuth } from "@/contexts/AuthContext";
 
 // Mock data - replace with actual API calls
+// Mock individual employee data
+const employeeData = [
+  {
+    id: "1",
+    name: "Alice Johnson",
+    role: "Senior Developer",
+    department: "Engineering",
+    avatar: "",
+    currentScore: 4.5,
+    trend: "up",
+    reviewHistory: [
+      { date: "2024-01", score: 4.2, type: "monthly", status: "completed" },
+      { date: "2024-02", score: 4.3, type: "monthly", status: "completed" },
+      { date: "2024-03", score: 4.4, type: "quarterly", status: "completed" },
+      { date: "2024-04", score: 4.5, type: "monthly", status: "completed" },
+      { date: "2024-05", score: 4.6, type: "monthly", status: "completed" },
+      { date: "2024-06", score: 4.5, type: "quarterly", status: "completed" }
+    ],
+    categoryScores: [
+      { category: "Technical Skills", current: 4.7, previous: 4.5, trend: "up" },
+      { category: "Communication", current: 4.3, previous: 4.2, trend: "up" },
+      { category: "Teamwork", current: 4.5, previous: 4.6, trend: "down" },
+      { category: "Leadership", current: 4.4, previous: 4.1, trend: "up" },
+      { category: "Goal Achievement", current: 4.6, previous: 4.4, trend: "up" }
+    ]
+  },
+  {
+    id: "2",
+    name: "Bob Smith",
+    role: "Product Manager",
+    department: "Product",
+    avatar: "",
+    currentScore: 4.1,
+    trend: "stable",
+    reviewHistory: [
+      { date: "2024-01", score: 4.0, type: "monthly", status: "completed" },
+      { date: "2024-02", score: 4.1, type: "monthly", status: "completed" },
+      { date: "2024-03", score: 4.0, type: "quarterly", status: "completed" },
+      { date: "2024-04", score: 4.2, type: "monthly", status: "completed" },
+      { date: "2024-05", score: 4.1, type: "monthly", status: "completed" },
+      { date: "2024-06", score: 4.1, type: "quarterly", status: "overdue" }
+    ],
+    categoryScores: [
+      { category: "Strategic Thinking", current: 4.3, previous: 4.1, trend: "up" },
+      { category: "Communication", current: 4.0, previous: 4.0, trend: "stable" },
+      { category: "Team Management", current: 3.9, previous: 4.1, trend: "down" },
+      { category: "Execution", current: 4.2, previous: 4.0, trend: "up" },
+      { category: "Innovation", current: 4.1, previous: 4.2, trend: "down" }
+    ]
+  },
+  {
+    id: "3",
+    name: "Carol Davis",
+    role: "UX Designer",
+    department: "Design",
+    avatar: "",
+    currentScore: 4.6,
+    trend: "up",
+    reviewHistory: [
+      { date: "2024-01", score: 4.3, type: "monthly", status: "completed" },
+      { date: "2024-02", score: 4.4, type: "monthly", status: "completed" },
+      { date: "2024-03", score: 4.5, type: "quarterly", status: "completed" },
+      { date: "2024-04", score: 4.6, type: "monthly", status: "completed" },
+      { date: "2024-05", score: 4.7, type: "monthly", status: "completed" },
+      { date: "2024-06", score: 4.6, type: "quarterly", status: "completed" }
+    ],
+    categoryScores: [
+      { category: "Design Quality", current: 4.8, previous: 4.6, trend: "up" },
+      { category: "User Research", current: 4.5, previous: 4.4, trend: "up" },
+      { category: "Collaboration", current: 4.6, previous: 4.5, trend: "up" },
+      { category: "Innovation", current: 4.7, previous: 4.5, trend: "up" },
+      { category: "Process Improvement", current: 4.4, previous: 4.3, trend: "up" }
+    ]
+  }
+];
+
 const reviewStats = {
   totalReviews: 156,
   completedReviews: 142,
@@ -53,6 +131,8 @@ export function ReportsPage() {
   const { user } = useAuth();
   const [timeframe, setTimeframe] = useState("6months");
   const [department, setDepartment] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
 
   if (!user || !["admin", "manager"].includes(user.role)) {
     return (
@@ -67,6 +147,33 @@ export function ReportsPage() {
 
   const completionRate = ((reviewStats.completedReviews / reviewStats.totalReviews) * 100).toFixed(1);
   const monthlyGrowth = ((reviewStats.thisMonth - reviewStats.lastMonth) / reviewStats.lastMonth * 100).toFixed(1);
+
+  // Filter employees based on search and department
+  const filteredEmployees = employeeData.filter(emp => {
+    const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         emp.role.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDepartment = department === "all" || emp.department.toLowerCase() === department.toLowerCase();
+    return matchesSearch && matchesDepartment;
+  });
+
+  const selectedEmployeeData = selectedEmployee ? 
+    employeeData.find(emp => emp.id === selectedEmployee) : null;
+
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case "up": return <TrendingUp className="h-4 w-4 text-green-500" />;
+      case "down": return <TrendingDown className="h-4 w-4 text-red-500" />;
+      default: return <div className="h-4 w-4" />;
+    }
+  };
+
+  const getTrendColor = (trend: string) => {
+    switch (trend) {
+      case "up": return "text-green-600";
+      case "down": return "text-red-600";
+      default: return "text-gray-600";
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -158,6 +265,7 @@ export function ReportsPage() {
           <TabsTrigger value="departments">Departments</TabsTrigger>
           <TabsTrigger value="trends">Trends</TabsTrigger>
           <TabsTrigger value="distribution">Score Distribution</TabsTrigger>
+          <TabsTrigger value="individual">Individual Reports</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -339,6 +447,188 @@ export function ReportsPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="individual" className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Employee List */}
+            <div className="lg:col-span-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Team Members
+                  </CardTitle>
+                  <CardDescription>Select an employee to view their performance history</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search employees..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {filteredEmployees.map((employee) => (
+                      <div
+                        key={employee.id}
+                        className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                          selectedEmployee === employee.id 
+                            ? 'border-primary bg-primary/5' 
+                            : 'border-border hover:bg-accent'
+                        }`}
+                        onClick={() => setSelectedEmployee(employee.id)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={employee.avatar} />
+                            <AvatarFallback>{employee.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{employee.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{employee.role}</p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {getTrendIcon(employee.trend)}
+                            <span className="text-sm font-medium">{employee.currentScore}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Individual Performance Details */}
+            <div className="lg:col-span-2">
+              {selectedEmployeeData ? (
+                <div className="space-y-6">
+                  {/* Employee Header */}
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={selectedEmployeeData.avatar} />
+                          <AvatarFallback>{selectedEmployeeData.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <CardTitle className="text-xl">{selectedEmployeeData.name}</CardTitle>
+                          <CardDescription>{selectedEmployeeData.role} • {selectedEmployeeData.department}</CardDescription>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center gap-2">
+                            {getTrendIcon(selectedEmployeeData.trend)}
+                            <span className="text-2xl font-bold">{selectedEmployeeData.currentScore}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">Current Score</p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+
+                  {/* Performance Trend */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Performance History</CardTitle>
+                      <CardDescription>Review scores over time</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <LineChart data={selectedEmployeeData.reviewHistory}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="date" />
+                          <YAxis domain={[3.5, 5]} />
+                          <Tooltip />
+                          <Line 
+                            type="monotone" 
+                            dataKey="score" 
+                            stroke="hsl(var(--primary))" 
+                            strokeWidth={3}
+                            dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 6 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  {/* Category Breakdown */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Category Performance</CardTitle>
+                      <CardDescription>Current vs previous review comparison</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {selectedEmployeeData.categoryScores.map((category) => (
+                          <div key={category.category} className="flex items-center justify-between p-3 rounded-lg border">
+                            <div className="flex-1">
+                              <p className="font-medium">{category.category}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-sm text-muted-foreground">
+                                  Previous: {category.previous}
+                                </span>
+                                <span className={`text-sm ${getTrendColor(category.trend)}`}>
+                                  ({category.trend === "up" ? "+" : category.trend === "down" ? "-" : ""}
+                                  {Math.abs(category.current - category.previous).toFixed(1)})
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {getTrendIcon(category.trend)}
+                              <span className="text-xl font-bold">{category.current}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Recent Reviews */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Review History</CardTitle>
+                      <CardDescription>Recent performance reviews</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {selectedEmployeeData.reviewHistory.slice().reverse().map((review, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 rounded-lg border">
+                            <div className="flex items-center gap-3">
+                              <div className="text-sm">
+                                <p className="font-medium">{review.date}</p>
+                                <p className="text-muted-foreground capitalize">{review.type} Review</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Badge variant={review.status === "completed" ? "default" : "destructive"}>
+                                {review.status}
+                              </Badge>
+                              <span className="font-bold text-lg">{review.score}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              ) : (
+                <Card className="h-96 flex items-center justify-center">
+                  <CardContent>
+                    <div className="text-center">
+                      <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold">Select an Employee</h3>
+                      <p className="text-muted-foreground">Choose a team member to view their performance history</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
