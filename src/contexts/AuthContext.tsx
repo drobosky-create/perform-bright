@@ -1,10 +1,28 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, AuthState } from '@/types/auth';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
-interface AuthContextValue extends AuthState {
+interface Profile {
+  id: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  department: string | null;
+  job_title: string | null;
+  photo_url: string | null;
+}
+
+interface AuthContextValue {
+  user: User | null;
+  profile: Profile | null;
+  session: Session | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  signUp: (email: string, password: string, name: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signOut: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  updateUser: (user: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -17,112 +35,109 @@ export const useAuth = () => {
   return context;
 };
 
-// Mock users for demo
-const mockUsers: User[] = [
-  {
-    id: '1',
-    email: 'admin@company.com',
-    name: 'Sarah Johnson',
-    role: 'admin',
-    department: 'HR',
-    employmentType: 'employee',
-    reviewCadence: 'quarterly',
-    createdAt: new Date('2024-01-01'),
-    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b332c1b1?w=150&h=150&fit=crop&crop=face'
-  },
-  {
-    id: '2',
-    email: 'manager@company.com',
-    name: 'Michael Chen',
-    role: 'manager',
-    department: 'Engineering',
-    employmentType: 'employee',
-    reviewCadence: 'quarterly',
-    createdAt: new Date('2024-01-01'),
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
-  },
-  {
-    id: '3',
-    email: 'team@company.com',
-    name: 'Alex Rivera',
-    role: 'team_member',
-    department: 'Engineering',
-    managerId: '2',
-    employmentType: 'employee',
-    reviewCadence: 'monthly',
-    createdAt: new Date('2024-01-01'),
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
-  }
-];
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    isAuthenticated: false,
-    isLoading: true
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchProfile = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    
+    if (data && !error) {
+      setProfile(data);
+    }
+  };
 
   useEffect(() => {
-    // Check for stored auth
-    const storedUser = localStorage.getItem('pt_user');
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        setAuthState({
-          user,
-          isAuthenticated: true,
-          isLoading: false
-        });
-      } catch {
-        localStorage.removeItem('pt_user');
-        setAuthState(prev => ({ ...prev, isLoading: false }));
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+        
+        // Fetch profile data when user signs in
+        if (session?.user) {
+          setTimeout(() => {
+            fetchProfile(session.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
+        }
       }
-    } else {
-      setAuthState(prev => ({ ...prev, isLoading: false }));
-    }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+      
+      if (session?.user) {
+        setTimeout(() => {
+          fetchProfile(session.user.id);
+        }, 0);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
-    // Mock authentication
-    const user = mockUsers.find(u => u.email === email);
-    if (user && password === 'demo123') {
-      const userWithLastLogin = { ...user, lastLogin: new Date() };
-      setAuthState({
-        user: userWithLastLogin,
-        isAuthenticated: true,
-        isLoading: false
-      });
-      localStorage.setItem('pt_user', JSON.stringify(userWithLastLogin));
-    } else {
-      throw new Error('Invalid credentials');
-    }
-  };
-
-  const logout = () => {
-    setAuthState({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false
+  const signUp = async (email: string, password: string, name: string) => {
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          name: name
+        }
+      }
     });
-    localStorage.removeItem('pt_user');
+    return { error };
   };
 
-  const updateUser = (updates: Partial<User>) => {
-    if (authState.user) {
-      const updatedUser = { ...authState.user, ...updates };
-      setAuthState(prev => ({
-        ...prev,
-        user: updatedUser
-      }));
-      localStorage.setItem('pt_user', JSON.stringify(updatedUser));
-    }
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    return { error };
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  // Legacy method for compatibility
+  const login = async (email: string, password: string) => {
+    const { error } = await signIn(email, password);
+    if (error) throw new Error(error.message);
+  };
+
+  // Legacy method for compatibility
+  const logout = () => {
+    signOut();
   };
 
   const value: AuthContextValue = {
-    ...authState,
+    user,
+    profile,
+    session,
+    isAuthenticated: !!user,
+    isLoading,
+    signUp,
+    signIn,
+    signOut,
     login,
-    logout,
-    updateUser
+    logout
   };
 
   return (

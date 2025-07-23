@@ -83,14 +83,14 @@ const navigationItems: NavItem[] = [
 
 export function AppSidebar() {
   const { state } = useSidebar();
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
   const location = useLocation();
   const currentPath = location.pathname;
   
   const collapsed = state === "collapsed";
 
   const filteredItems = navigationItems.filter(item => 
-    item.roles.includes(user?.role || '')
+    item.roles.includes('admin') // For now, show all items until roles are implemented
   );
 
   const isActive = (path: string) => currentPath === path;
@@ -119,7 +119,7 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="min-w-0">
               <h1 className="font-semibold text-foreground truncate">Performance Tracker</h1>
-              <p className="text-xs text-muted-foreground truncate">{user.role.replace('_', ' ').toUpperCase()}</p>
+              <p className="text-xs text-muted-foreground truncate">{profile?.department || 'Employee'}</p>
             </div>
           )}
         </div>
@@ -149,15 +149,15 @@ export function AppSidebar() {
       <SidebarFooter className="p-4 border-t border-border-soft">
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8 shrink-0">
-            <AvatarImage src={user.avatar} alt={user.name} />
+            <AvatarImage src={profile?.photo_url || ''} alt={profile?.name || ''} />
             <AvatarFallback className="bg-primary/10 text-primary text-xs">
-              {user.name.split(' ').map(n => n[0]).join('')}
+              {profile?.name?.split(' ').map(n => n[0]).join('') || user?.email?.[0].toUpperCase()}
             </AvatarFallback>
           </Avatar>
           {!collapsed && (
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              <p className="text-sm font-medium text-foreground truncate">{profile?.name || user?.email}</p>
+              <p className="text-xs text-muted-foreground truncate">{profile?.email || user?.email}</p>
             </div>
           )}
           <Button

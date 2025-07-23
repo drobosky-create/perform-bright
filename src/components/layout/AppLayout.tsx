@@ -11,7 +11,7 @@ interface AppLayoutProps {
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   return (
     <SidebarProvider>
@@ -41,7 +41,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               {/* User Info */}
               <div className="hidden sm:flex items-center gap-2 text-sm">
                 <span className="text-foreground-muted">Welcome back,</span>
-                <span className="font-medium text-foreground">{user?.name?.split(' ')[0]}</span>
+                <span className="font-medium text-foreground">{profile?.name?.split(' ')[0] || user?.email?.split('@')[0]}</span>
               </div>
             </div>
           </header>

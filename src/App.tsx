@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
-import { LoginForm } from "@/components/auth/LoginForm";
+import { AuthPage } from "@/pages/AuthPage";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
 import { TeamDirectory } from "@/components/team/TeamDirectory";
@@ -29,7 +29,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   if (!isAuthenticated) {
-    return <LoginForm />;
+    return <AuthPage />;
   }
   
   return <AppLayout>{children}</AppLayout>;
@@ -44,6 +44,7 @@ const App = () => (
           <NotificationProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="/auth" element={<AuthPage />} />
             <Route path="/" element={
               <ProtectedRoute>
                 <AdminDashboard />
