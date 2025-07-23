@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
+import { TeamDirectory } from "@/components/team/TeamDirectory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,11 @@ const App = () => (
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/team" element={
+              <ProtectedRoute>
+                <TeamDirectory />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />
