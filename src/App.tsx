@@ -8,6 +8,7 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
 import { TeamDirectory } from "@/components/team/TeamDirectory";
+import { ReviewsPage } from "@/components/reviews/ReviewsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,11 @@ const App = () => (
             <Route path="/team" element={
               <ProtectedRoute>
                 <TeamDirectory />
+              </ProtectedRoute>
+            } />
+            <Route path="/reviews" element={
+              <ProtectedRoute>
+                <ReviewsPage />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />
