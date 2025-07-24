@@ -287,10 +287,10 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
                           </div>
                         </div>
                       </div>
-                      <Progress 
-                        value={(metric.current / metric.target) * 100} 
-                        className="h-2" 
-                      />
+                       <Progress 
+                         value={(metric.current / metric.target) * 100} 
+                         className="h-3 bg-secondary" 
+                       />
                     </div>
                   </CardContent>
                 </Card>
