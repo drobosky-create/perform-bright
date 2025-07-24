@@ -25,6 +25,7 @@ import { useGoals } from '@/hooks/useGoals';
 import { useToast } from '@/hooks/use-toast';
 import { AddMilestoneDialog } from './AddMilestoneDialog';
 import { AddMetricDialog } from './AddMetricDialog';
+import { UpdateMetricDialog } from './UpdateMetricDialog';
 
 interface GoalDetailsDialogProps {
   goal: Goal | null;
@@ -40,6 +41,8 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddMilestone, setShowAddMilestone] = useState(false);
   const [showAddMetric, setShowAddMetric] = useState(false);
+  const [showUpdateMetric, setShowUpdateMetric] = useState(false);
+  const [selectedMetric, setSelectedMetric] = useState<any>(null);
   const { createMilestone, createMetric, updateMilestone, updateMetric, goals } = useGoals();
   const { toast } = useToast();
 
@@ -99,12 +102,16 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
     });
   };
 
-  const handleUpdateMetric = (metricId: string, currentValue: number) => {
-    const newValue = prompt('Enter new current value:', currentValue.toString());
-    if (newValue !== null && !isNaN(Number(newValue))) {
+  const handleUpdateMetric = (metric: any) => {
+    setSelectedMetric(metric);
+    setShowUpdateMetric(true);
+  };
+
+  const handleMetricUpdate = (current: number) => {
+    if (selectedMetric) {
       updateMetric({
-        id: metricId,
-        current: parseFloat(newValue)
+        id: selectedMetric.id,
+        current
       });
     }
   };
@@ -290,7 +297,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
                          <h4 className="font-medium">{metric.name}</h4>
                          <div className="text-right">
                            <button 
-                             onClick={() => handleUpdateMetric(metric.id, metric.current)}
+                             onClick={() => handleUpdateMetric(metric)}
                              className="text-lg font-bold hover:text-primary cursor-pointer transition-colors"
                              title="Click to update current value"
                            >
@@ -323,6 +330,13 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
           open={showAddMetric}
           onOpenChange={setShowAddMetric}
           onSubmit={handleMetricSubmit}
+        />
+        
+        <UpdateMetricDialog
+          open={showUpdateMetric}
+          onOpenChange={setShowUpdateMetric}
+          onSubmit={handleMetricUpdate}
+          metric={selectedMetric}
         />
       </DialogContent>
     </Dialog>
