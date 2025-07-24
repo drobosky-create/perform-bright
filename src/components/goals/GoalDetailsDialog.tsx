@@ -40,10 +40,13 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddMilestone, setShowAddMilestone] = useState(false);
   const [showAddMetric, setShowAddMetric] = useState(false);
-  const { createMilestone, createMetric, updateMilestone, updateMetric } = useGoals();
+  const { createMilestone, createMetric, updateMilestone, updateMetric, goals } = useGoals();
   const { toast } = useToast();
 
-  if (!goal) return null;
+  // Get the live goal data from the query instead of using the stale prop
+  const liveGoal = goals?.find(g => g.id === goal?.id) || goal;
+
+  if (!goal || !liveGoal) return null;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -67,7 +70,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
     }
   };
 
-  const completedMilestones = goal.milestones.filter(m => m.completed).length;
+  const completedMilestones = liveGoal.milestones.filter(m => m.completed).length;
 
   const handleAddMilestone = () => {
     setShowAddMilestone(true);
@@ -75,7 +78,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
 
   const handleMilestoneSubmit = (data: { title: string; description?: string; targetDate: string }) => {
     createMilestone({
-      goalId: goal.id,
+      goalId: liveGoal.id,
       title: data.title,
       description: data.description,
       targetDate: data.targetDate
@@ -88,7 +91,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
 
   const handleMetricSubmit = (data: { name: string; target: number; unit: string; current?: number }) => {
     createMetric({
-      goalId: goal.id,
+      goalId: liveGoal.id,
       name: data.name,
       target: data.target,
       unit: data.unit,
@@ -111,15 +114,15 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div className="space-y-2">
-              <DialogTitle className="text-xl">{goal.title}</DialogTitle>
+              <DialogTitle className="text-xl">{liveGoal.title}</DialogTitle>
               <div className="flex items-center gap-2">
-                <Badge variant={getPriorityColor(goal.priority)}>
-                  {goal.priority}
+                <Badge variant={getPriorityColor(liveGoal.priority)}>
+                  {liveGoal.priority}
                 </Badge>
-                <Badge className={`${getStatusColor(goal.status)} text-white`}>
-                  {goal.status.replace('-', ' ')}
+                <Badge className={`${getStatusColor(liveGoal.status)} text-white`}>
+                  {liveGoal.status.replace('-', ' ')}
                 </Badge>
-                <Badge variant="outline">{goal.category}</Badge>
+                <Badge variant="outline">{liveGoal.category}</Badge>
               </div>
             </div>
             <div className="flex gap-2">
@@ -153,20 +156,20 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Overall Progress</span>
-                    <span className="text-2xl font-bold">{goal.progress}%</span>
+                    <span className="text-2xl font-bold">{liveGoal.progress}%</span>
                   </div>
-                  <Progress value={goal.progress} className="h-3" />
+                  <Progress value={liveGoal.progress} className="h-3" />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4 pt-4">
                   <div className="space-y-1">
                     <div className="text-sm text-muted-foreground">Target Date</div>
-                    <div className="font-medium">{goal.targetDate.toLocaleDateString()}</div>
+                    <div className="font-medium">{liveGoal.targetDate.toLocaleDateString()}</div>
                   </div>
                   <div className="space-y-1">
                     <div className="text-sm text-muted-foreground">Days Remaining</div>
                     <div className="font-medium">
-                      {Math.ceil((goal.targetDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days
+                      {Math.ceil((liveGoal.targetDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days
                     </div>
                   </div>
                 </div>
@@ -179,7 +182,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
                 <CardTitle>Description</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">{goal.description}</p>
+                <p className="text-muted-foreground">{liveGoal.description}</p>
               </CardContent>
             </Card>
 
@@ -191,7 +194,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
                     <div>
                       <p className="text-sm text-muted-foreground">Milestones</p>
                       <p className="text-2xl font-bold">
-                        {completedMilestones}/{goal.milestones.length}
+                        {completedMilestones}/{liveGoal.milestones.length}
                       </p>
                     </div>
                     <CheckCircle2 className="h-8 w-8 text-green-500" />
@@ -204,7 +207,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Metrics</p>
-                      <p className="text-2xl font-bold">{goal.metrics.length}</p>
+                      <p className="text-2xl font-bold">{liveGoal.metrics.length}</p>
                     </div>
                     <TrendingUp className="h-8 w-8 text-blue-500" />
                   </div>
@@ -220,7 +223,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
             </div>
             
             <div className="space-y-3">
-              {goal.milestones.map((milestone, index) => (
+              {liveGoal.milestones.map((milestone, index) => (
                 <Card key={milestone.id}>
                   <CardContent className="pt-4">
                      <div className="flex items-start gap-3">
@@ -269,7 +272,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
             </div>
             
             <div className="grid gap-4">
-              {goal.metrics.map((metric) => (
+              {liveGoal.metrics.map((metric) => (
                 <Card key={metric.id}>
                   <CardContent className="pt-4">
                     <div className="space-y-3">
