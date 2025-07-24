@@ -23,6 +23,7 @@ import {
 import { Goal } from '@/types/goals';
 import { useGoals } from '@/hooks/useGoals';
 import { useToast } from '@/hooks/use-toast';
+import { AddMilestoneDialog } from './AddMilestoneDialog';
 
 interface GoalDetailsDialogProps {
   goal: Goal | null;
@@ -36,6 +37,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
   onOpenChange,
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [showAddMilestone, setShowAddMilestone] = useState(false);
   const { createMilestone, createMetric, updateMilestone, updateMetric } = useGoals();
   const { toast } = useToast();
 
@@ -66,29 +68,16 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
   const completedMilestones = goal.milestones.filter(m => m.completed).length;
 
   const handleAddMilestone = () => {
-    console.log('Add milestone button clicked');
-    const title = prompt('Enter milestone title:');
-    console.log('Title entered:', title);
-    if (title) {
-      const description = prompt('Enter milestone description (optional):') || '';
-      console.log('Description entered:', description);
-      const targetDateStr = prompt('Enter target date (YYYY-MM-DD):');
-      console.log('Target date entered:', targetDateStr);
-      if (targetDateStr) {
-        console.log('Creating milestone with data:', {
-          goalId: goal.id,
-          title,
-          description,
-          targetDate: targetDateStr
-        });
-        createMilestone({
-          goalId: goal.id,
-          title,
-          description,
-          targetDate: targetDateStr
-        });
-      }
-    }
+    setShowAddMilestone(true);
+  };
+
+  const handleMilestoneSubmit = (data: { title: string; description?: string; targetDate: string }) => {
+    createMilestone({
+      goalId: goal.id,
+      title: data.title,
+      description: data.description,
+      targetDate: data.targetDate
+    });
   };
 
   const handleAddMetric = () => {
@@ -308,6 +297,12 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
             </div>
           </TabsContent>
         </Tabs>
+        
+        <AddMilestoneDialog
+          open={showAddMilestone}
+          onOpenChange={setShowAddMilestone}
+          onSubmit={handleMilestoneSubmit}
+        />
       </DialogContent>
     </Dialog>
   );
