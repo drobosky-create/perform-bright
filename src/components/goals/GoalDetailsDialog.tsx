@@ -21,6 +21,8 @@ import {
   Trash2
 } from 'lucide-react';
 import { Goal } from '@/types/goals';
+import { useGoals } from '@/hooks/useGoals';
+import { useToast } from '@/hooks/use-toast';
 
 interface GoalDetailsDialogProps {
   goal: Goal | null;
@@ -34,6 +36,8 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
   onOpenChange,
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const { createMilestone, createMetric, updateMilestone, updateMetric } = useGoals();
+  const { toast } = useToast();
 
   if (!goal) return null;
 
@@ -60,6 +64,49 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
   };
 
   const completedMilestones = goal.milestones.filter(m => m.completed).length;
+
+  const handleAddMilestone = () => {
+    const title = prompt('Enter milestone title:');
+    if (title) {
+      const description = prompt('Enter milestone description (optional):') || '';
+      const targetDateStr = prompt('Enter target date (YYYY-MM-DD):');
+      if (targetDateStr) {
+        createMilestone({
+          goalId: goal.id,
+          title,
+          description,
+          targetDate: targetDateStr
+        });
+      }
+    }
+  };
+
+  const handleAddMetric = () => {
+    const name = prompt('Enter metric name:');
+    if (name) {
+      const targetStr = prompt('Enter target value:');
+      const unit = prompt('Enter unit (e.g., hours, dollars, count):');
+      const currentStr = prompt('Enter current value (optional):') || '0';
+      
+      if (targetStr && unit) {
+        createMetric({
+          goalId: goal.id,
+          name,
+          target: parseFloat(targetStr),
+          unit,
+          current: parseFloat(currentStr)
+        });
+      }
+    }
+  };
+
+  const handleToggleMilestone = (milestoneId: string, completed: boolean) => {
+    updateMilestone({
+      id: milestoneId,
+      completed: !completed,
+      completedDate: !completed ? new Date().toISOString().split('T')[0] : undefined
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -172,19 +219,24 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
           <TabsContent value="milestones" className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Milestones</h3>
-              <Button size="sm">Add Milestone</Button>
+              <Button size="sm" onClick={handleAddMilestone}>Add Milestone</Button>
             </div>
             
             <div className="space-y-3">
               {goal.milestones.map((milestone, index) => (
                 <Card key={milestone.id}>
                   <CardContent className="pt-4">
-                    <div className="flex items-start gap-3">
-                      {milestone.completed ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
-                      ) : (
-                        <Circle className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      )}
+                     <div className="flex items-start gap-3">
+                       <button 
+                         onClick={() => handleToggleMilestone(milestone.id, milestone.completed)}
+                         className="mt-0.5"
+                       >
+                         {milestone.completed ? (
+                           <CheckCircle2 className="h-5 w-5 text-green-500 hover:text-green-600 cursor-pointer" />
+                         ) : (
+                           <Circle className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer" />
+                         )}
+                       </button>
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center justify-between">
                           <h4 className={`font-medium ${milestone.completed ? 'line-through text-muted-foreground' : ''}`}>
@@ -216,7 +268,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
           <TabsContent value="metrics" className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Metrics & KPIs</h3>
-              <Button size="sm">Add Metric</Button>
+              <Button size="sm" onClick={handleAddMetric}>Add Metric</Button>
             </div>
             
             <div className="grid gap-4">
