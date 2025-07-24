@@ -99,6 +99,16 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
     });
   };
 
+  const handleUpdateMetric = (metricId: string, currentValue: number) => {
+    const newValue = prompt('Enter new current value:', currentValue.toString());
+    if (newValue !== null && !isNaN(Number(newValue))) {
+      updateMetric({
+        id: metricId,
+        current: parseFloat(newValue)
+      });
+    }
+  };
+
   const handleToggleMilestone = (milestoneId: string, completed: boolean) => {
     console.log('Toggling milestone:', milestoneId, 'Current completed:', completed);
     updateMilestone({
@@ -276,17 +286,21 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
                 <Card key={metric.id}>
                   <CardContent className="pt-4">
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium">{metric.name}</h4>
-                        <div className="text-right">
-                          <div className="text-lg font-bold">
-                            {metric.current} / {metric.target} {metric.unit}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {Math.round((metric.current / metric.target) * 100)}% of target
-                          </div>
-                        </div>
-                      </div>
+                       <div className="flex items-center justify-between">
+                         <h4 className="font-medium">{metric.name}</h4>
+                         <div className="text-right">
+                           <button 
+                             onClick={() => handleUpdateMetric(metric.id, metric.current)}
+                             className="text-lg font-bold hover:text-primary cursor-pointer transition-colors"
+                             title="Click to update current value"
+                           >
+                             {metric.current} / {metric.target} {metric.unit}
+                           </button>
+                           <div className="text-sm text-muted-foreground">
+                             {Math.round((metric.current / metric.target) * 100)}% of target
+                           </div>
+                         </div>
+                       </div>
                        <Progress 
                          value={(metric.current / metric.target) * 100} 
                          className="h-3 bg-secondary" 
