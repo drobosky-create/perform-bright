@@ -14,39 +14,451 @@ export type Database = {
   }
   public: {
     Tables: {
+      goal_metrics: {
+        Row: {
+          created_at: string
+          current: number | null
+          goal_id: string
+          id: string
+          name: string
+          target: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current?: number | null
+          goal_id: string
+          id?: string
+          name: string
+          target: number
+          unit: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current?: number | null
+          goal_id?: string
+          id?: string
+          name?: string
+          target?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_metrics_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goal_milestones: {
+        Row: {
+          completed: boolean | null
+          completed_date: string | null
+          created_at: string
+          description: string | null
+          goal_id: string
+          id: string
+          target_date: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          goal_id: string
+          id?: string
+          target_date: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          completed?: boolean | null
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          goal_id?: string
+          id?: string
+          target_date?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_milestones_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goals: {
+        Row: {
+          assigned_by: string | null
+          category: Database["public"]["Enums"]["goal_category"]
+          created_at: string
+          description: string
+          id: string
+          priority: Database["public"]["Enums"]["goal_priority"]
+          progress: number | null
+          review_id: string | null
+          status: Database["public"]["Enums"]["goal_status"] | null
+          target_date: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          category: Database["public"]["Enums"]["goal_category"]
+          created_at?: string
+          description: string
+          id?: string
+          priority: Database["public"]["Enums"]["goal_priority"]
+          progress?: number | null
+          review_id?: string | null
+          status?: Database["public"]["Enums"]["goal_status"] | null
+          target_date: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          category?: Database["public"]["Enums"]["goal_category"]
+          created_at?: string
+          description?: string
+          id?: string
+          priority?: Database["public"]["Enums"]["goal_priority"]
+          progress?: number | null
+          review_id?: string | null
+          status?: Database["public"]["Enums"]["goal_status"] | null
+          target_date?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goals_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goals_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
           department: string | null
           email: string | null
+          employment_type: Database["public"]["Enums"]["employment_type"] | null
           id: string
           job_title: string | null
+          last_login: string | null
+          manager_id: string | null
           name: string | null
           phone: string | null
           photo_url: string | null
+          review_cadence: Database["public"]["Enums"]["review_cadence"] | null
+          role: Database["public"]["Enums"]["app_role"] | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           department?: string | null
           email?: string | null
+          employment_type?:
+            | Database["public"]["Enums"]["employment_type"]
+            | null
           id: string
           job_title?: string | null
+          last_login?: string | null
+          manager_id?: string | null
           name?: string | null
           phone?: string | null
           photo_url?: string | null
+          review_cadence?: Database["public"]["Enums"]["review_cadence"] | null
+          role?: Database["public"]["Enums"]["app_role"] | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           department?: string | null
           email?: string | null
+          employment_type?:
+            | Database["public"]["Enums"]["employment_type"]
+            | null
           id?: string
           job_title?: string | null
+          last_login?: string | null
+          manager_id?: string | null
           name?: string | null
           phone?: string | null
           photo_url?: string | null
+          review_cadence?: Database["public"]["Enums"]["review_cadence"] | null
+          role?: Database["public"]["Enums"]["app_role"] | null
           updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          label: string
+          order_index: number
+          template_id: string
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          label: string
+          order_index?: number
+          template_id: string
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          label?: string
+          order_index?: number
+          template_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_categories_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "review_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_scores: {
+        Row: {
+          category_id: string
+          created_at: string
+          final_score: number | null
+          id: string
+          manager_notes: string | null
+          manager_score: number | null
+          review_id: string
+          self_notes: string | null
+          self_score: number | null
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          final_score?: number | null
+          id?: string
+          manager_notes?: string | null
+          manager_score?: number | null
+          review_id: string
+          self_notes?: string | null
+          self_score?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          final_score?: number | null
+          id?: string
+          manager_notes?: string | null
+          manager_score?: number | null
+          review_id?: string
+          self_notes?: string | null
+          self_score?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_scores_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "review_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_scores_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_templates: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          instructions: string | null
+          is_default: boolean | null
+          name: string
+          type: Database["public"]["Enums"]["review_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          instructions?: string | null
+          is_default?: boolean | null
+          name: string
+          type: Database["public"]["Enums"]["review_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          instructions?: string | null
+          is_default?: boolean | null
+          name?: string
+          type?: Database["public"]["Enums"]["review_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          due_date: string
+          id: string
+          manager_id: string
+          manager_review_completed: boolean | null
+          overall_outcome: string | null
+          period: string
+          requires_follow_up: boolean | null
+          self_review_completed: boolean | null
+          status: Database["public"]["Enums"]["review_status"] | null
+          template_id: string
+          type: Database["public"]["Enums"]["review_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          due_date: string
+          id?: string
+          manager_id: string
+          manager_review_completed?: boolean | null
+          overall_outcome?: string | null
+          period: string
+          requires_follow_up?: boolean | null
+          self_review_completed?: boolean | null
+          status?: Database["public"]["Enums"]["review_status"] | null
+          template_id: string
+          type: Database["public"]["Enums"]["review_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          manager_id?: string
+          manager_review_completed?: boolean | null
+          overall_outcome?: string | null
+          period?: string
+          requires_follow_up?: boolean | null
+          self_review_completed?: boolean | null
+          status?: Database["public"]["Enums"]["review_status"] | null
+          template_id?: string
+          type?: Database["public"]["Enums"]["review_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "review_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -55,10 +467,40 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
+      is_manager_of: {
+        Args: { _manager_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "manager" | "team_member"
+      employment_type: "employee" | "contractor"
+      goal_category:
+        | "performance"
+        | "development"
+        | "leadership"
+        | "technical"
+        | "business"
+        | "personal"
+      goal_priority: "low" | "medium" | "high" | "critical"
+      goal_status:
+        | "draft"
+        | "active"
+        | "on-track"
+        | "at-risk"
+        | "behind"
+        | "completed"
+        | "cancelled"
+      review_cadence: "monthly" | "quarterly" | "annual"
+      review_status: "not_started" | "in_progress" | "complete" | "overdue"
+      review_type: "monthly" | "quarterly" | "annual"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -185,6 +627,30 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "manager", "team_member"],
+      employment_type: ["employee", "contractor"],
+      goal_category: [
+        "performance",
+        "development",
+        "leadership",
+        "technical",
+        "business",
+        "personal",
+      ],
+      goal_priority: ["low", "medium", "high", "critical"],
+      goal_status: [
+        "draft",
+        "active",
+        "on-track",
+        "at-risk",
+        "behind",
+        "completed",
+        "cancelled",
+      ],
+      review_cadence: ["monthly", "quarterly", "annual"],
+      review_status: ["not_started", "in_progress", "complete", "overdue"],
+      review_type: ["monthly", "quarterly", "annual"],
+    },
   },
 } as const
