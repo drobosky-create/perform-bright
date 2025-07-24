@@ -208,6 +208,17 @@ export const useGoals = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals', user?.id] });
+      toast({
+        title: "Milestone updated",
+        description: "Milestone status has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error updating milestone",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
