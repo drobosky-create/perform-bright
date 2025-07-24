@@ -97,6 +97,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
   };
 
   const handleToggleMilestone = (milestoneId: string, completed: boolean) => {
+    console.log('Toggling milestone:', milestoneId, 'Current completed:', completed);
     updateMilestone({
       id: milestoneId,
       completed: !completed,
