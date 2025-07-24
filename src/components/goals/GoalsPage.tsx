@@ -4,10 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Target, TrendingUp, Calendar, Filter } from 'lucide-react';
+import { Plus, Target, TrendingUp, Calendar, Filter, AlertCircle, Loader2 } from 'lucide-react';
 import { Goal, GoalStatus, GoalCategory } from '@/types/goals';
 import { CreateGoalDialog } from './CreateGoalDialog';
 import { GoalDetailsDialog } from './GoalDetailsDialog';
+import { useGoals } from '@/hooks/useGoals';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export const GoalsPage: React.FC = () => {
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
@@ -15,98 +17,8 @@ export const GoalsPage: React.FC = () => {
   const [filter, setFilter] = useState<'all' | GoalStatus>('all');
   const [categoryFilter, setCategoryFilter] = useState<'all' | GoalCategory>('all');
 
-  // Mock data
-  const mockGoals: Goal[] = [
-    {
-      id: '1',
-      title: 'Improve Code Review Efficiency',
-      description: 'Reduce average code review time and improve quality feedback',
-      category: 'technical',
-      priority: 'high',
-      status: 'on-track',
-      progress: 75,
-      targetDate: new Date('2024-12-31'),
-      createdDate: new Date('2024-01-15'),
-      updatedDate: new Date('2024-12-15'),
-      userId: '1',
-      assignedBy: '2',
-      milestones: [
-        {
-          id: '1',
-          title: 'Complete Code Review Training',
-          targetDate: new Date('2024-06-30'),
-          completed: true,
-          completedDate: new Date('2024-06-25')
-        },
-        {
-          id: '2',
-          title: 'Implement Review Checklist',
-          targetDate: new Date('2024-09-30'),
-          completed: true,
-          completedDate: new Date('2024-09-20')
-        },
-        {
-          id: '3',
-          title: 'Achieve Target Review Time',
-          targetDate: new Date('2024-12-31'),
-          completed: false
-        }
-      ],
-      metrics: [
-        {
-          id: '1',
-          name: 'Average Review Time',
-          target: 2,
-          current: 2.5,
-          unit: 'hours'
-        },
-        {
-          id: '2',
-          name: 'Review Quality Score',
-          target: 9,
-          current: 8.5,
-          unit: '/10'
-        }
-      ]
-    },
-    {
-      id: '2',
-      title: 'Leadership Development',
-      description: 'Develop leadership skills through mentoring and team management',
-      category: 'leadership',
-      priority: 'medium',
-      status: 'active',
-      progress: 45,
-      targetDate: new Date('2025-03-31'),
-      createdDate: new Date('2024-10-01'),
-      updatedDate: new Date('2024-12-10'),
-      userId: '1',
-      milestones: [
-        {
-          id: '3',
-          title: 'Start Mentoring Program',
-          targetDate: new Date('2024-11-30'),
-          completed: true,
-          completedDate: new Date('2024-11-15')
-        },
-        {
-          id: '4',
-          title: 'Complete Leadership Course',
-          targetDate: new Date('2025-01-31'),
-          completed: false
-        }
-      ],
-      metrics: [
-        {
-          id: '3',
-          name: 'Team Members Mentored',
-          target: 3,
-          current: 1,
-          unit: 'people'
-        }
-      ]
-    }
-  ];
+  // Fetch real goals data
+  const { goals, isLoading, error } = useGoals();
 
   const getStatusColor = (status: GoalStatus) => {
     switch (status) {
@@ -130,19 +42,58 @@ export const GoalsPage: React.FC = () => {
     }
   };
 
-  const filteredGoals = mockGoals.filter(goal => {
+  const filteredGoals = goals.filter(goal => {
     const statusMatch = filter === 'all' || goal.status === filter;
     const categoryMatch = categoryFilter === 'all' || goal.category === categoryFilter;
     return statusMatch && categoryMatch;
   });
 
   const stats = {
-    total: mockGoals.length,
-    completed: mockGoals.filter(g => g.status === 'completed').length,
-    onTrack: mockGoals.filter(g => g.status === 'on-track').length,
-    atRisk: mockGoals.filter(g => ['at-risk', 'behind'].includes(g.status)).length,
-    avgProgress: Math.round(mockGoals.reduce((acc, g) => acc + g.progress, 0) / mockGoals.length)
+    total: goals.length,
+    completed: goals.filter(g => g.status === 'completed').length,
+    onTrack: goals.filter(g => g.status === 'on-track').length,
+    atRisk: goals.filter(g => ['at-risk', 'behind'].includes(g.status)).length,
+    avgProgress: goals.length > 0 ? Math.round(goals.reduce((acc, g) => acc + g.progress, 0) / goals.length) : 0
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Goals & Objectives</h1>
+            <p className="text-muted-foreground">
+              Track your professional development and performance goals
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Goals & Objectives</h1>
+            <p className="text-muted-foreground">
+              Track your professional development and performance goals
+            </p>
+          </div>
+        </div>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to load goals. Please try again later.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -215,44 +166,65 @@ export const GoalsPage: React.FC = () => {
 
         <TabsContent value={filter} className="space-y-4">
           {/* Goals Grid */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredGoals.map((goal) => (
-              <Card key={goal.id} className="cursor-pointer hover:shadow-md transition-shadow" 
-                    onClick={() => setSelectedGoal(goal)}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="text-base line-clamp-2">{goal.title}</CardTitle>
-                    <Badge variant={getPriorityColor(goal.priority)} className="text-xs">
-                      {goal.priority}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {goal.description}
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Progress</span>
-                      <span className="font-medium">{goal.progress}%</span>
+          {filteredGoals.length === 0 ? (
+            <div className="text-center py-12">
+              <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">
+                {filter === 'all' ? 'No goals yet' : `No ${filter.replace('-', ' ')} goals`}
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                {filter === 'all' 
+                  ? 'Start by creating your first goal to track your progress.' 
+                  : `No goals match the current filter. Try viewing all goals or create a new one.`
+                }
+              </p>
+              {filter === 'all' && (
+                <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Create Your First Goal
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {filteredGoals.map((goal) => (
+                <Card key={goal.id} className="cursor-pointer hover:shadow-md transition-shadow" 
+                      onClick={() => setSelectedGoal(goal)}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-base line-clamp-2">{goal.title}</CardTitle>
+                      <Badge variant={getPriorityColor(goal.priority)} className="text-xs">
+                        {goal.priority}
+                      </Badge>
                     </div>
-                    <Progress value={goal.progress} className="h-2" />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <Badge 
-                      className={`${getStatusColor(goal.status)} text-white`}
-                    >
-                      {goal.status.replace('-', ' ')}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      Due {goal.targetDate.toLocaleDateString()}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {goal.description}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span>Progress</span>
+                        <span className="font-medium">{goal.progress}%</span>
+                      </div>
+                      <Progress value={goal.progress} className="h-2" />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Badge 
+                        className={`${getStatusColor(goal.status)} text-white`}
+                      >
+                        {goal.status.replace('-', ' ')}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        Due {goal.targetDate.toLocaleDateString()}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 

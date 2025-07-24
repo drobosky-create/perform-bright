@@ -26,12 +26,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { GoalCategory, GoalPriority } from '@/types/goals';
+import { useGoals } from '@/hooks/useGoals';
+import type { Database } from '@/integrations/supabase/types';
 
 const createGoalSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -54,6 +56,8 @@ export const CreateGoalDialog: React.FC<CreateGoalDialogProps> = ({
   open,
   onOpenChange,
 }) => {
+  const { createGoal, isCreating } = useGoals();
+  
   const form = useForm<CreateGoalFormData>({
     resolver: zodResolver(createGoalSchema),
     defaultValues: {
@@ -65,8 +69,14 @@ export const CreateGoalDialog: React.FC<CreateGoalDialogProps> = ({
   });
 
   const onSubmit = (data: CreateGoalFormData) => {
-    console.log('Creating goal:', data);
-    // API call to create goal
+    createGoal({
+      title: data.title,
+      description: data.description,
+      category: data.category as Database['public']['Enums']['goal_category'],
+      priority: data.priority as Database['public']['Enums']['goal_priority'],
+      target_date: data.targetDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
+    });
+    
     form.reset();
     onOpenChange(false);
   };
@@ -223,10 +233,24 @@ export const CreateGoalDialog: React.FC<CreateGoalDialogProps> = ({
             />
 
             <div className="flex justify-end gap-3">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+                disabled={isCreating}
+              >
                 Cancel
               </Button>
-              <Button type="submit">Create Goal</Button>
+              <Button type="submit" disabled={isCreating}>
+                {isCreating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Goal'
+                )}
+              </Button>
             </div>
           </form>
         </Form>
