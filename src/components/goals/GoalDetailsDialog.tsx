@@ -24,6 +24,7 @@ import { Goal } from '@/types/goals';
 import { useGoals } from '@/hooks/useGoals';
 import { useToast } from '@/hooks/use-toast';
 import { AddMilestoneDialog } from './AddMilestoneDialog';
+import { AddMetricDialog } from './AddMetricDialog';
 
 interface GoalDetailsDialogProps {
   goal: Goal | null;
@@ -38,6 +39,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddMilestone, setShowAddMilestone] = useState(false);
+  const [showAddMetric, setShowAddMetric] = useState(false);
   const { createMilestone, createMetric, updateMilestone, updateMetric } = useGoals();
   const { toast } = useToast();
 
@@ -81,22 +83,17 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
   };
 
   const handleAddMetric = () => {
-    const name = prompt('Enter metric name:');
-    if (name) {
-      const targetStr = prompt('Enter target value:');
-      const unit = prompt('Enter unit (e.g., hours, dollars, count):');
-      const currentStr = prompt('Enter current value (optional):') || '0';
-      
-      if (targetStr && unit) {
-        createMetric({
-          goalId: goal.id,
-          name,
-          target: parseFloat(targetStr),
-          unit,
-          current: parseFloat(currentStr)
-        });
-      }
-    }
+    setShowAddMetric(true);
+  };
+
+  const handleMetricSubmit = (data: { name: string; target: number; unit: string; current?: number }) => {
+    createMetric({
+      goalId: goal.id,
+      name: data.name,
+      target: data.target,
+      unit: data.unit,
+      current: data.current || 0
+    });
   };
 
   const handleToggleMilestone = (milestoneId: string, completed: boolean) => {
@@ -302,6 +299,12 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
           open={showAddMilestone}
           onOpenChange={setShowAddMilestone}
           onSubmit={handleMilestoneSubmit}
+        />
+        
+        <AddMetricDialog
+          open={showAddMetric}
+          onOpenChange={setShowAddMetric}
+          onSubmit={handleMetricSubmit}
         />
       </DialogContent>
     </Dialog>
