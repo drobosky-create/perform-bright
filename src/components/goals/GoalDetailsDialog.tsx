@@ -66,11 +66,21 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
   const completedMilestones = goal.milestones.filter(m => m.completed).length;
 
   const handleAddMilestone = () => {
+    console.log('Add milestone button clicked');
     const title = prompt('Enter milestone title:');
+    console.log('Title entered:', title);
     if (title) {
       const description = prompt('Enter milestone description (optional):') || '';
+      console.log('Description entered:', description);
       const targetDateStr = prompt('Enter target date (YYYY-MM-DD):');
+      console.log('Target date entered:', targetDateStr);
       if (targetDateStr) {
+        console.log('Creating milestone with data:', {
+          goalId: goal.id,
+          title,
+          description,
+          targetDate: targetDateStr
+        });
         createMilestone({
           goalId: goal.id,
           title,
