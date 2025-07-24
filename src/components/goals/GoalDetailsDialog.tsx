@@ -43,7 +43,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
   const [showAddMetric, setShowAddMetric] = useState(false);
   const [showUpdateMetric, setShowUpdateMetric] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
-  const { createMilestone, createMetric, updateMilestone, updateMetric, goals } = useGoals();
+  const { createMilestone, createMetric, updateMilestone, updateMetric, updateGoal, goals } = useGoals();
   const { toast } = useToast();
 
   // Get the live goal data from the query instead of using the stale prop
@@ -107,6 +107,29 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
     setShowUpdateMetric(true);
   };
 
+  const handleEditGoal = () => {
+    // For now, let's allow editing the progress
+    const newProgress = prompt('Update goal progress (0-100):', liveGoal.progress.toString());
+    if (newProgress !== null && !isNaN(Number(newProgress))) {
+      const progress = Math.max(0, Math.min(100, parseFloat(newProgress)));
+      updateGoal({
+        id: liveGoal.id,
+        progress
+      });
+    }
+  };
+
+  const handleDeleteGoal = () => {
+    if (confirm(`Are you sure you want to delete the goal "${liveGoal.title}"?`)) {
+      // Note: We'll need to add a delete mutation to the useGoals hook
+      toast({
+        title: "Delete functionality",
+        description: "Goal deletion will be implemented in a future update.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleMetricUpdate = (current: number) => {
     if (selectedMetric) {
       updateMetric({
@@ -143,10 +166,10 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleEditGoal}>
                 <Edit className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleDeleteGoal}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
