@@ -10,6 +10,7 @@ interface Profile {
   department: string | null;
   job_title: string | null;
   photo_url: string | null;
+  role: string | null;
 }
 
 interface AuthContextValue {

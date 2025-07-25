@@ -3,9 +3,9 @@ import { ReviewTemplates } from "./ReviewTemplates";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function SettingsPage() {
-  const { user } = useAuth();
+  const { profile } = useAuth();
 
-  if (user?.role !== 'admin') {
+  if (profile?.role !== 'admin') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
