@@ -128,13 +128,13 @@ const reviewTypes = [
 ];
 
 export function ReportsPage() {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const [timeframe, setTimeframe] = useState("6months");
   const [department, setDepartment] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
 
-  if (!user || !["admin", "manager"].includes(user.role)) {
+  if (!profile || !["admin", "manager"].includes(profile.role || "")) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
