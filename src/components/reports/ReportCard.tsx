@@ -9,6 +9,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { usePerformanceData } from "@/hooks/usePerformanceData";
+import { useGoals } from "@/hooks/useGoals";
+import { useReviews } from "@/hooks/useReviews";
 import { 
   ArrowLeft, 
   User, 
@@ -20,7 +23,10 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Link,
+  Lightbulb,
+  BarChart3
 } from "lucide-react";
 
 interface UserProfile {
@@ -63,10 +69,13 @@ export function ReportCard() {
   const { toast } = useToast();
   
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [goals, setGoals] = useState<Goal[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
+
+  // Use enhanced hooks for connected data
+  const { performanceMetrics, isLoading: perfLoading } = usePerformanceData(userId);
+  const { goals } = useGoals();
+  const { reviews, linkGoalToReview } = useReviews(userId);
 
   useEffect(() => {
     if (!currentUser || !userId) return;
@@ -121,26 +130,6 @@ export function ReportCard() {
       if (profileError) throw profileError;
       setProfile(profileData);
 
-      // Load goals
-      const { data: goalsData, error: goalsError } = await supabase
-        .from('goals')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (goalsError) throw goalsError;
-      setGoals(goalsData || []);
-
-      // Load reviews
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from('reviews')
-        .select('*')
-        .eq('user_id', userId)
-        .order('due_date', { ascending: false });
-
-      if (reviewsError) throw reviewsError;
-      setReviews(reviewsData || []);
-
     } catch (error) {
       console.error('Error loading user data:', error);
       toast({
@@ -153,7 +142,11 @@ export function ReportCard() {
     }
   };
 
-  if (loading) {
+  const handleLinkGoalToReview = (goalId: string, reviewId: string) => {
+    linkGoalToReview({ goalId, reviewId });
+  };
+
+  if (loading || perfLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -207,10 +200,14 @@ export function ReportCard() {
     }
   };
 
-  const activeGoals = goals.filter(g => g.status !== 'completed');
-  const completedGoals = goals.filter(g => g.status === 'completed');
-  const pendingReviews = reviews.filter(r => r.status !== 'completed');
-  const completedReviews = reviews.filter(r => r.status === 'completed');
+  const activeGoals = goals?.filter(g => g.status !== 'completed') || [];
+  const completedGoals = goals?.filter(g => g.status === 'completed') || [];
+  const pendingReviews = reviews?.filter(r => r.status !== 'completed') || [];
+  const completedReviews = reviews?.filter(r => r.status === 'completed') || [];
+
+  // Get performance insights
+  const insights = performanceMetrics?.insights || [];
+  const metrics = performanceMetrics;
 
   return (
     <div className="space-y-6">
@@ -243,17 +240,17 @@ export function ReportCard() {
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Enhanced Summary Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Goals</CardTitle>
+            <CardTitle className="text-sm font-medium">Goals Status</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeGoals.length}</div>
+            <div className="text-2xl font-bold">{metrics?.goalsCompleted || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {completedGoals.length} completed this period
+              {metrics?.goalsOnTrack || 0} on track, {metrics?.goalsAtRisk || 0} at risk
             </p>
           </CardContent>
         </Card>
@@ -264,24 +261,22 @@ export function ReportCard() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{completedReviews.length}</div>
+            <div className="text-2xl font-bold">{metrics?.reviewsCompleted || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {pendingReviews.length} pending
+              {pendingReviews.length} pending completion
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Goal Progress</CardTitle>
+            <CardTitle className="text-sm font-medium">Progress</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {goals.length > 0 ? Math.round(goals.reduce((acc, goal) => acc + goal.progress, 0) / goals.length) : 0}%
-            </div>
+            <div className="text-2xl font-bold">{metrics?.averageGoalProgress || 0}%</div>
             <p className="text-xs text-muted-foreground">
-              Average across all goals
+              Average goal completion
             </p>
           </CardContent>
         </Card>
@@ -292,9 +287,9 @@ export function ReportCard() {
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4.2/5</div>
+            <div className="text-2xl font-bold">{metrics?.averageReviewScore || 0}/5</div>
             <p className="text-xs text-muted-foreground">
-              Latest review score
+              {metrics?.milestonesCompleted || 0}/{metrics?.totalMilestones || 0} milestones
             </p>
           </CardContent>
         </Card>
@@ -306,65 +301,98 @@ export function ReportCard() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="goals">Goals</TabsTrigger>
           <TabsTrigger value="reviews">Reviews</TabsTrigger>
+          <TabsTrigger value="insights">Insights</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
-            {/* Recent Goals */}
+            {/* Active Goals with Review Links */}
             <Card>
               <CardHeader>
                 <CardTitle>Active Goals</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {activeGoals.slice(0, 5).map((goal) => (
-                  <div key={goal.id} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm">{goal.title}</span>
-                      <Badge variant="outline" className="text-xs">{goal.status}</Badge>
+                {activeGoals.slice(0, 5).map((goal) => {
+                  const linkedReview = reviews?.find(r => r.linkedGoals?.some(lg => lg.id === goal.id));
+                  return (
+                    <div key={goal.id} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-sm">{goal.title}</span>
+                        <div className="flex items-center gap-2">
+                          {linkedReview && (
+                            <div title="Linked to review">
+                              <Link className="h-3 w-3 text-blue-500" />
+                            </div>
+                          )}
+                          <Badge variant="outline" className="text-xs">{goal.status}</Badge>
+                        </div>
+                      </div>
+                      <Progress value={goal.progress} className="h-2" />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{goal.progress}% complete</span>
+                        <span>Due: {goal.targetDate.toLocaleDateString()}</span>
+                      </div>
+                      {linkedReview && (
+                        <p className="text-xs text-blue-600">
+                          Linked to {linkedReview.type} review ({linkedReview.period})
+                        </p>
+                      )}
                     </div>
-                    <Progress value={goal.progress} className="h-2" />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>{goal.progress}% complete</span>
-                      <span>Due: {new Date(goal.target_date).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {activeGoals.length === 0 && (
                   <p className="text-muted-foreground text-center py-4">No active goals</p>
                 )}
               </CardContent>
             </Card>
 
-            {/* Recent Reviews */}
+            {/* Recent Reviews with Goal Progress */}
             <Card>
               <CardHeader>
                 <CardTitle>Recent Reviews</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {reviews.slice(0, 5).map((review) => (
-                  <div key={review.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      {getStatusIcon(review.status)}
-                      <div>
-                        <p className="font-medium text-sm">{review.type} Review</p>
-                        <p className="text-xs text-muted-foreground">{review.period}</p>
+                {reviews?.slice(0, 5).map((review) => (
+                  <div key={review.id} className="p-3 border rounded-lg space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        {getStatusIcon(review.status)}
+                        <div>
+                          <p className="font-medium text-sm">{review.type} Review</p>
+                          <p className="text-xs text-muted-foreground">{review.period}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant={review.status === 'completed' ? 'default' : 'secondary'}>
+                          {review.status}
+                        </Badge>
+                        {review.averageScore && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Score: {review.averageScore.toFixed(1)}/5
+                          </p>
+                        )}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <Badge variant={review.status === 'completed' ? 'default' : 'secondary'}>
-                        {review.status}
-                      </Badge>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {review.completed_at 
-                          ? `Completed ${new Date(review.completed_at).toLocaleDateString()}`
-                          : `Due ${new Date(review.due_date).toLocaleDateString()}`
-                        }
-                      </p>
-                    </div>
+                    {review.linkedGoals && review.linkedGoals.length > 0 && (
+                      <div className="text-xs text-muted-foreground">
+                        <span className="font-medium">{review.linkedGoals.length} linked goal{review.linkedGoals.length > 1 ? 's' : ''}:</span>
+                        <div className="mt-1 space-y-1">
+                          {review.linkedGoals.slice(0, 2).map((goal) => (
+                            <div key={goal.id} className="flex justify-between">
+                              <span>{goal.title}</span>
+                              <span>{goal.progress}%</span>
+                            </div>
+                          ))}
+                          {review.linkedGoals.length > 2 && (
+                            <p className="text-muted-foreground">+{review.linkedGoals.length - 2} more</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
-                {reviews.length === 0 && (
+                {(reviews?.length || 0) === 0 && (
                   <p className="text-muted-foreground text-center py-4">No reviews available</p>
                 )}
               </CardContent>
@@ -378,34 +406,51 @@ export function ReportCard() {
               <CardTitle>All Goals</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {goals.map((goal) => (
-                <div key={goal.id} className="p-4 border rounded-lg space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium">{goal.title}</h4>
-                      <p className="text-sm text-muted-foreground mt-1">{goal.description}</p>
+              {goals?.map((goal) => {
+                const linkedReview = reviews?.find(r => r.linkedGoals?.some(lg => lg.id === goal.id));
+                return (
+                  <div key={goal.id} className="p-4 border rounded-lg space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium">{goal.title}</h4>
+                          {linkedReview && (
+                            <div title="Linked to review">
+                              <Link className="h-4 w-4 text-blue-500" />
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">{goal.description}</p>
+                        {linkedReview && (
+                          <p className="text-xs text-blue-600 mt-1">
+                            Linked to {linkedReview.period} review
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline">{goal.category}</Badge>
+                        <Badge variant={goal.status === 'completed' ? 'default' : 'secondary'}>
+                          {goal.status}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline">{goal.category}</Badge>
-                      <Badge variant={goal.status === 'completed' ? 'default' : 'secondary'}>
-                        {goal.status}
-                      </Badge>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Progress</span>
+                        <span>{goal.progress}%</span>
+                      </div>
+                      <Progress value={goal.progress} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+                      <span>Priority: {goal.priority}</span>
+                      <span>Due: {goal.targetDate.toLocaleDateString()}</span>
+                      <span>Milestones: {goal.milestones.filter(m => m.completed).length}/{goal.milestones.length}</span>
+                      <span>Metrics: {goal.metrics.length}</span>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Progress</span>
-                      <span>{goal.progress}%</span>
-                    </div>
-                    <Progress value={goal.progress} />
-                  </div>
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Priority: {goal.priority}</span>
-                    <span>Due: {new Date(goal.target_date).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              ))}
-              {goals.length === 0 && (
+                );
+              })}
+              {(goals?.length || 0) === 0 && (
                 <p className="text-muted-foreground text-center py-8">No goals available</p>
               )}
             </CardContent>
@@ -418,9 +463,9 @@ export function ReportCard() {
               <CardTitle>Review History</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {reviews.map((review) => (
-                <div key={review.id} className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-3">
+              {reviews?.map((review) => (
+                <div key={review.id} className="p-4 border rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       {getStatusIcon(review.status)}
                       <div>
@@ -428,40 +473,171 @@ export function ReportCard() {
                         <p className="text-sm text-muted-foreground">{review.period}</p>
                       </div>
                     </div>
-                    <Badge variant={review.status === 'completed' ? 'default' : 'secondary'}>
-                      {review.status}
-                    </Badge>
+                    <div className="text-right">
+                      <Badge variant={review.status === 'completed' ? 'default' : 'secondary'}>
+                        {review.status}
+                      </Badge>
+                      {review.averageScore && (
+                        <p className="text-sm font-medium mt-1">
+                          Score: {review.averageScore.toFixed(1)}/5
+                        </p>
+                      )}
+                    </div>
                   </div>
+                  
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-muted-foreground">Self Review:</span>
-                      <span className={`ml-2 ${review.self_review_completed ? 'text-green-600' : 'text-orange-600'}`}>
-                        {review.self_review_completed ? 'Completed' : 'Pending'}
+                      <span className={`ml-2 ${review.selfReviewCompleted ? 'text-green-600' : 'text-orange-600'}`}>
+                        {review.selfReviewCompleted ? 'Completed' : 'Pending'}
                       </span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Manager Review:</span>
-                      <span className={`ml-2 ${review.manager_review_completed ? 'text-green-600' : 'text-orange-600'}`}>
-                        {review.manager_review_completed ? 'Completed' : 'Pending'}
+                      <span className={`ml-2 ${review.managerReviewCompleted ? 'text-green-600' : 'text-orange-600'}`}>
+                        {review.managerReviewCompleted ? 'Completed' : 'Pending'}
                       </span>
                     </div>
                   </div>
-                  <div className="mt-3 text-xs text-muted-foreground">
-                    {review.completed_at 
-                      ? `Completed on ${new Date(review.completed_at).toLocaleDateString()}`
-                      : `Due on ${new Date(review.due_date).toLocaleDateString()}`
+
+                  {review.linkedGoals && review.linkedGoals.length > 0 && (
+                    <div className="space-y-2">
+                      <h5 className="text-sm font-medium">Linked Goals ({review.linkedGoals.length})</h5>
+                      <div className="space-y-1">
+                        {review.linkedGoals.map((goal) => (
+                          <div key={goal.id} className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">{goal.title}</span>
+                            <span className="font-medium">{goal.progress}% • {goal.status}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="text-xs text-muted-foreground border-t pt-2">
+                    {review.completedAt 
+                      ? `Completed on ${review.completedAt.toLocaleDateString()}`
+                      : `Due on ${review.dueDate.toLocaleDateString()}`
                     }
                   </div>
                 </div>
               ))}
-              {reviews.length === 0 && (
+              {(reviews?.length || 0) === 0 && (
                 <p className="text-muted-foreground text-center py-8">No reviews available</p>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
+        <TabsContent value="insights" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lightbulb className="h-5 w-5" />
+                Performance Insights
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {insights.map((insight, index) => (
+                <div key={index} className="p-4 border rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2 rounded-full ${
+                      insight.status === 'positive' ? 'bg-green-100 text-green-600' :
+                      insight.status === 'negative' ? 'bg-red-100 text-red-600' :
+                      'bg-blue-100 text-blue-600'
+                    }`}>
+                      {insight.status === 'positive' ? <CheckCircle className="h-4 w-4" /> :
+                       insight.status === 'negative' ? <AlertCircle className="h-4 w-4" /> :
+                       <BarChart3 className="h-4 w-4" />}
+                    </div>
+                    <div className="flex-1">
+                      <h5 className="font-medium">{insight.title}</h5>
+                      <p className="text-sm text-muted-foreground mt-1">{insight.description}</p>
+                      <Badge variant="outline" className="text-xs mt-2 capitalize">
+                        {insight.type}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {insights.length === 0 && (
+                <p className="text-muted-foreground text-center py-8">
+                  Performance insights will appear as data is collected
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="performance" className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Performance Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Performance Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">{metrics?.goalsCompleted || 0}</div>
+                    <p className="text-xs text-muted-foreground">Goals Completed</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">{metrics?.averageGoalProgress || 0}%</div>
+                    <p className="text-xs text-muted-foreground">Avg Progress</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600">{metrics?.reviewsCompleted || 0}</div>
+                    <p className="text-xs text-muted-foreground">Reviews Done</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-orange-600">{metrics?.averageReviewScore || 0}</div>
+                    <p className="text-xs text-muted-foreground">Avg Score</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Goal-Review Connections */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Link className="h-5 w-5" />
+                  Data Connections
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Reviews with linked goals</span>
+                  <span className="font-medium">
+                    {reviews?.filter(r => r.linkedGoals && r.linkedGoals.length > 0).length || 0}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Goals linked to reviews</span>
+                  <span className="font-medium">
+                    {goals?.filter(g => reviews?.some(r => r.linkedGoals?.some(lg => lg.id === g.id))).length || 0}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Milestone completion rate</span>
+                  <span className="font-medium">
+                    {metrics?.totalMilestones ? Math.round((metrics.milestonesCompleted / metrics.totalMilestones) * 100) : 0}%
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Active metrics tracking</span>
+                  <span className="font-medium">
+                    {goals?.reduce((sum, goal) => sum + goal.metrics.length, 0) || 0}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
           <Card>
             <CardHeader>
               <CardTitle>Performance Summary</CardTitle>

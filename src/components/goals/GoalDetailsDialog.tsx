@@ -21,15 +21,19 @@ import {
   Circle,
   Edit,
   Trash2,
-  Settings
+  Settings,
+  FileText
 } from 'lucide-react';
 import { Goal } from '@/types/goals';
 import { useGoals } from '@/hooks/useGoals';
+import { useReviews } from '@/hooks/useReviews';
 import { useToast } from '@/hooks/use-toast';
 import { AddMilestoneDialog } from './AddMilestoneDialog';
 import { AddMetricDialog } from './AddMetricDialog';
 import { UpdateMetricDialog } from './UpdateMetricDialog';
 import { EditGoalDialog } from './EditGoalDialog';
+import { Button as LinkButton } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface GoalDetailsDialogProps {
   goal: Goal | null;
@@ -49,6 +53,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
   const [showEditGoal, setShowEditGoal] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
   const { createMilestone, createMetric, updateMilestone, updateMetric, updateGoal, toggleAutoCalculation, goals } = useGoals();
+  const { reviews, linkGoalToReview } = useReviews();
   const { toast } = useToast();
 
   // Get the live goal data from the query instead of using the stale prop
@@ -243,7 +248,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
               </CardContent>
             </Card>
 
-            {/* Quick Stats */}
+            {/* Quick Stats & Review Link */}
             <div className="grid grid-cols-2 gap-4">
               <Card>
                 <CardContent className="pt-6">
@@ -271,6 +276,48 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
                 </CardContent>
               </Card>
             </div>
+
+            {/* Review Integration */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Review Integration
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {liveGoal.reviewId ? (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm font-medium text-blue-900">
+                      This goal is linked to a performance review
+                    </p>
+                    <p className="text-xs text-blue-700 mt-1">
+                      Progress on this goal will be tracked as part of your review process
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      Link this goal to a review for integrated performance tracking
+                    </p>
+                    <div className="flex gap-2">
+                      <Select onValueChange={(reviewId) => linkGoalToReview({ goalId: liveGoal.id, reviewId })}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Select a review to link" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {reviews?.filter(r => r.status !== 'completed').map((review) => (
+                            <SelectItem key={review.id} value={review.id}>
+                              {review.type} Review - {review.period}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="milestones" className="space-y-4">
