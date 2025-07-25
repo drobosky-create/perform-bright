@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReviewTemplates } from "./ReviewTemplates";
+import { UserManagement } from "./UserManagement";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function SettingsPage() {
@@ -26,11 +27,16 @@ export function SettingsPage() {
       <Tabs defaultValue="templates" className="space-y-6">
         <TabsList>
           <TabsTrigger value="templates">Review Templates</TabsTrigger>
+          <TabsTrigger value="users">User Management</TabsTrigger>
           <TabsTrigger value="general">General</TabsTrigger>
         </TabsList>
         
         <TabsContent value="templates">
           <ReviewTemplates />
+        </TabsContent>
+        
+        <TabsContent value="users">
+          <UserManagement />
         </TabsContent>
         
         <TabsContent value="general">
