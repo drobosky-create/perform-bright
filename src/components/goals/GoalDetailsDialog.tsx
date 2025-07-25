@@ -26,6 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AddMilestoneDialog } from './AddMilestoneDialog';
 import { AddMetricDialog } from './AddMetricDialog';
 import { UpdateMetricDialog } from './UpdateMetricDialog';
+import { EditGoalDialog } from './EditGoalDialog';
 
 interface GoalDetailsDialogProps {
   goal: Goal | null;
@@ -42,6 +43,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
   const [showAddMilestone, setShowAddMilestone] = useState(false);
   const [showAddMetric, setShowAddMetric] = useState(false);
   const [showUpdateMetric, setShowUpdateMetric] = useState(false);
+  const [showEditGoal, setShowEditGoal] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
   const { createMilestone, createMetric, updateMilestone, updateMetric, updateGoal, goals } = useGoals();
   const { toast } = useToast();
@@ -108,15 +110,14 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
   };
 
   const handleEditGoal = () => {
-    // For now, let's allow editing the progress
-    const newProgress = prompt('Update goal progress (0-100):', liveGoal.progress.toString());
-    if (newProgress !== null && !isNaN(Number(newProgress))) {
-      const progress = Math.max(0, Math.min(100, parseFloat(newProgress)));
-      updateGoal({
-        id: liveGoal.id,
-        progress
-      });
-    }
+    setShowEditGoal(true);
+  };
+
+  const handleGoalProgressUpdate = (progress: number) => {
+    updateGoal({
+      id: liveGoal.id,
+      progress
+    });
   };
 
   const handleDeleteGoal = () => {
@@ -360,6 +361,14 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
           onOpenChange={setShowUpdateMetric}
           onSubmit={handleMetricUpdate}
           metric={selectedMetric}
+        />
+        
+        <EditGoalDialog
+          open={showEditGoal}
+          onOpenChange={setShowEditGoal}
+          onSubmit={handleGoalProgressUpdate}
+          currentProgress={liveGoal.progress}
+          goalTitle={liveGoal.title}
         />
       </DialogContent>
     </Dialog>
