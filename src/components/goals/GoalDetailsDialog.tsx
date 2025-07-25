@@ -11,6 +11,8 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { 
   Calendar, 
   Target, 
@@ -18,7 +20,8 @@ import {
   CheckCircle2, 
   Circle,
   Edit,
-  Trash2
+  Trash2,
+  Settings
 } from 'lucide-react';
 import { Goal } from '@/types/goals';
 import { useGoals } from '@/hooks/useGoals';
@@ -45,7 +48,7 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
   const [showUpdateMetric, setShowUpdateMetric] = useState(false);
   const [showEditGoal, setShowEditGoal] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
-  const { createMilestone, createMetric, updateMilestone, updateMetric, updateGoal, goals } = useGoals();
+  const { createMilestone, createMetric, updateMilestone, updateMetric, updateGoal, toggleAutoCalculation, goals } = useGoals();
   const { toast } = useToast();
 
   // Get the live goal data from the query instead of using the stale prop
@@ -145,7 +148,8 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
     updateMilestone({
       id: milestoneId,
       completed: !completed,
-      completedDate: !completed ? new Date().toISOString().split('T')[0] : undefined
+      completedDate: !completed ? new Date().toISOString().split('T')[0] : undefined,
+      goalId: liveGoal.id
     });
   };
 
@@ -200,6 +204,18 @@ export const GoalDetailsDialog: React.FC<GoalDetailsDialogProps> = ({
                     <span className="text-2xl font-bold">{liveGoal.progress}%</span>
                   </div>
                   <Progress value={liveGoal.progress} className="h-3" />
+                </div>
+
+                {/* Auto-calculation toggle */}
+                <div className="flex items-center space-x-2 pt-2 border-t">
+                  <Switch 
+                    id="auto-calculate"
+                    checked={liveGoal.autoCalculateProgress}
+                    onCheckedChange={(checked) => toggleAutoCalculation({ goalId: liveGoal.id, autoCalculate: checked })}
+                  />
+                  <Label htmlFor="auto-calculate" className="text-sm cursor-pointer">
+                    Auto-calculate progress from milestones
+                  </Label>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4 pt-4">

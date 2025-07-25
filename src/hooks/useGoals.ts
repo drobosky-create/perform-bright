@@ -28,6 +28,13 @@ export interface UpdateGoalData {
   status?: Database['public']['Enums']['goal_status'];
 }
 
+// Utility function to calculate progress from milestones
+const calculateProgressFromMilestones = (milestones: GoalMilestone[]): number => {
+  if (milestones.length === 0) return 0;
+  const completedCount = milestones.filter(m => m.completed).length;
+  return Math.round((completedCount / milestones.length) * 100);
+};
+
 export const useGoals = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -66,6 +73,7 @@ export const useGoals = () => {
         userId: goal.user_id,
         assignedBy: goal.assigned_by,
         reviewId: goal.review_id,
+        autoCalculateProgress: goal.auto_calculate_progress || false,
         milestones: goal.goal_milestones?.map((milestone): GoalMilestone => ({
           id: milestone.id,
           title: milestone.title,
@@ -185,14 +193,16 @@ export const useGoals = () => {
     },
   });
 
-  // Update milestone mutation
+  // Update milestone mutation with auto-progress calculation
   const updateMilestoneMutation = useMutation({
-    mutationFn: async ({ id, completed, completedDate }: {
+    mutationFn: async ({ id, completed, completedDate, goalId }: {
       id: string;
       completed: boolean;
       completedDate?: string;
+      goalId?: string;
     }) => {
-      const { data, error } = await supabase
+      // Update milestone
+      const { data: milestoneData, error: milestoneError } = await supabase
         .from('goal_milestones')
         .update({
           completed,
@@ -200,11 +210,31 @@ export const useGoals = () => {
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
-        .select()
+        .select('*, goals!inner(id, auto_calculate_progress)')
         .single();
 
-      if (error) throw error;
-      return data;
+      if (milestoneError) throw milestoneError;
+
+      // If auto-calculation is enabled, update goal progress
+      if (milestoneData.goals?.auto_calculate_progress) {
+        const { data: allMilestones } = await supabase
+          .from('goal_milestones')
+          .select('completed')
+          .eq('goal_id', milestoneData.goal_id);
+
+        if (allMilestones) {
+          const newProgress = calculateProgressFromMilestones(
+            allMilestones.map(m => ({ completed: m.completed } as GoalMilestone))
+          );
+
+          await supabase
+            .from('goals')
+            .update({ progress: newProgress })
+            .eq('id', milestoneData.goal_id);
+        }
+      }
+
+      return milestoneData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals', user?.id] });
@@ -272,6 +302,35 @@ export const useGoals = () => {
     },
   });
 
+  // Toggle auto-calculation mutation
+  const toggleAutoCalculationMutation = useMutation({
+    mutationFn: async ({ goalId, autoCalculate }: { goalId: string; autoCalculate: boolean }) => {
+      const { data, error } = await supabase
+        .from('goals')
+        .update({ auto_calculate_progress: autoCalculate })
+        .eq('id', goalId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['goals', user?.id] });
+      toast({
+        title: "Auto-calculation setting updated",
+        description: "Goal progress calculation setting has been updated.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error updating setting",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     goals,
     isLoading,
@@ -282,6 +341,7 @@ export const useGoals = () => {
     updateMilestone: updateMilestoneMutation.mutate,
     createMetric: createMetricMutation.mutate,
     updateMetric: updateMetricMutation.mutate,
+    toggleAutoCalculation: toggleAutoCalculationMutation.mutate,
     isCreating: createGoalMutation.isPending,
     isUpdating: updateGoalMutation.isPending,
   };

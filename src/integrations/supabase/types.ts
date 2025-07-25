@@ -102,6 +102,7 @@ export type Database = {
       goals: {
         Row: {
           assigned_by: string | null
+          auto_calculate_progress: boolean | null
           category: Database["public"]["Enums"]["goal_category"]
           created_at: string
           description: string
@@ -117,6 +118,7 @@ export type Database = {
         }
         Insert: {
           assigned_by?: string | null
+          auto_calculate_progress?: boolean | null
           category: Database["public"]["Enums"]["goal_category"]
           created_at?: string
           description: string
@@ -132,6 +134,7 @@ export type Database = {
         }
         Update: {
           assigned_by?: string | null
+          auto_calculate_progress?: boolean | null
           category?: Database["public"]["Enums"]["goal_category"]
           created_at?: string
           description?: string

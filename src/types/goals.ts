@@ -12,6 +12,7 @@ export interface Goal {
   userId: string;
   assignedBy?: string;
   reviewId?: string;
+  autoCalculateProgress: boolean;
   milestones: GoalMilestone[];
   metrics: GoalMetric[];
 }
