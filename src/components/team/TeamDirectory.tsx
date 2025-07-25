@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,8 @@ import {
   Calendar,
   Network,
   Briefcase,
-  Phone
+  Phone,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -53,6 +55,7 @@ interface TeamMember {
 export const TeamDirectory: React.FC = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -113,6 +116,18 @@ export const TeamDirectory: React.FC = () => {
   const canEditProfile = (member: TeamMember) => {
     // Users can edit their own profile, or if they're an admin
     return member.id === user?.id || profile?.id === user?.id;
+  };
+
+  const canViewReportCard = (member: TeamMember) => {
+    // Team members can view their own, managers can view their reports, admins can view all
+    if (profile?.role === 'admin') return true;
+    if (member.id === user?.id) return true;
+    if (profile?.role === 'manager') {
+      // In a real app, you'd check if this member reports to the current user
+      // For now, we'll allow managers to view all report cards
+      return true;
+    }
+    return false;
   };
 
   return (
@@ -231,6 +246,15 @@ export const TeamDirectory: React.FC = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            {canViewReportCard(member) && (
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/report-card/${member.id}`);
+                              }}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                View Report Card
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem onClick={(e) => {
                               e.stopPropagation();
                               handleEditProfile(member);

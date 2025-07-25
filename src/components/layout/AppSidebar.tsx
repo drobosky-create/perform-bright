@@ -11,7 +11,8 @@ import {
   LogOut,
   User,
   Target,
-  HelpCircle
+  HelpCircle,
+  ClipboardList
 } from "lucide-react";
 
 import {
@@ -37,7 +38,7 @@ interface NavItem {
   roles: string[];
 }
 
-const navigationItems: NavItem[] = [
+const getNavigationItems = (userId: string): NavItem[] => [
   {
     title: "Dashboard",
     url: "/dashboard",
@@ -75,6 +76,12 @@ const navigationItems: NavItem[] = [
     roles: ["admin", "manager", "team_member"]
   },
   {
+    title: "My Report Card",
+    url: `/report-card/${userId}`,
+    icon: ClipboardList,
+    roles: ["admin", "manager", "team_member"]
+  },
+  {
     title: "Settings",
     url: "/settings",
     icon: Settings,
@@ -96,8 +103,9 @@ export function AppSidebar() {
   
   const collapsed = state === "collapsed";
 
+  const navigationItems = getNavigationItems(user?.id || '');
   const filteredItems = navigationItems.filter(item => 
-    item.roles.includes('admin') // For now, show all items until roles are implemented
+    profile?.role && item.roles.includes(profile.role)
   );
 
   const isActive = (path: string) => currentPath === path;

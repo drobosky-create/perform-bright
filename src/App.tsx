@@ -18,6 +18,7 @@ import { SettingsPage } from "@/components/settings/SettingsPage";
 import { ReportsPage } from "@/components/reports/ReportsPage";
 import { GoalsPage } from "@/components/goals/GoalsPage";
 import { HowToPage } from "@/components/help/HowToPage";
+import { ReportCard } from "@/components/reports/ReportCard";
 import { GettingStartedGuide } from "@/components/help/guides/GettingStartedGuide";
 import { ReviewsGuide } from "@/components/help/guides/ReviewsGuide";
 import { TeamGuide } from "@/components/help/guides/TeamGuide";
@@ -96,6 +97,11 @@ const App = () => (
             <Route path="/reports" element={
               <ProtectedRoute>
                 <ReportsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/report-card/:userId" element={
+              <ProtectedRoute>
+                <ReportCard />
               </ProtectedRoute>
             } />
             <Route path="/goals" element={
