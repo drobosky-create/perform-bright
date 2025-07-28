@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReviewTemplates } from "./ReviewTemplates";
 import { UserManagement } from "./UserManagement";
+import { CompanySettings } from "./CompanySettings";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function SettingsPage() {
@@ -28,6 +29,7 @@ export function SettingsPage() {
         <TabsList>
           <TabsTrigger value="templates">Review Templates</TabsTrigger>
           <TabsTrigger value="users">User Management</TabsTrigger>
+          <TabsTrigger value="company">Company Info</TabsTrigger>
           <TabsTrigger value="general">General</TabsTrigger>
         </TabsList>
         
@@ -37,6 +39,10 @@ export function SettingsPage() {
         
         <TabsContent value="users">
           <UserManagement />
+        </TabsContent>
+        
+        <TabsContent value="company">
+          <CompanySettings />
         </TabsContent>
         
         <TabsContent value="general">
