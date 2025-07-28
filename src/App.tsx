@@ -15,6 +15,7 @@ import { ReviewFormPage } from "@/components/reviews/ReviewFormPage";
 import { CreateReviewPage } from "@/components/reviews/CreateReviewPage";
 import { ReviewDashboard } from "@/components/reviews/ReviewDashboard";
 import { SettingsPage } from "@/components/settings/SettingsPage";
+import { ReviewTemplates } from "@/components/settings/ReviewTemplates";
 import { ReportsPage } from "@/components/reports/ReportsPage";
 import { GoalsPage } from "@/components/goals/GoalsPage";
 import { HowToPage } from "@/components/help/HowToPage";
@@ -92,6 +93,11 @@ const App = () => (
             <Route path="/settings" element={
               <ProtectedRoute>
                 <SettingsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/templates" element={
+              <ProtectedRoute>
+                <ReviewTemplates />
               </ProtectedRoute>
             } />
             <Route path="/reports" element={
