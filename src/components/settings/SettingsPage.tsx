@@ -1,5 +1,4 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ReviewTemplates } from "./ReviewTemplates";
 import { UserManagement } from "./UserManagement";
 import { CompanySettings } from "./CompanySettings";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,17 +24,12 @@ export function SettingsPage() {
         <p className="text-muted-foreground mt-1">Manage your organization's review system</p>
       </div>
 
-      <Tabs defaultValue="templates" className="space-y-6">
+      <Tabs defaultValue="users" className="space-y-6">
         <TabsList>
-          <TabsTrigger value="templates">Review Templates</TabsTrigger>
           <TabsTrigger value="users">User Management</TabsTrigger>
           <TabsTrigger value="company">Company Info</TabsTrigger>
           <TabsTrigger value="general">General</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="templates">
-          <ReviewTemplates />
-        </TabsContent>
         
         <TabsContent value="users">
           <UserManagement />
