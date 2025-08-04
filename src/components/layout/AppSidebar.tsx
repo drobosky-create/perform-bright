@@ -12,7 +12,8 @@ import {
   User,
   Target,
   HelpCircle,
-  ClipboardList
+  ClipboardList,
+  FolderOpen
 } from "lucide-react";
 
 import {
@@ -74,6 +75,12 @@ const getNavigationItems = (userId: string): NavItem[] => [
     url: "/goals",
     icon: Target,
     roles: ["admin", "manager", "team_member"]
+  },
+  {
+    title: "Documents",
+    url: "/documents",
+    icon: FolderOpen,
+    roles: ["admin", "manager"]
   },
   {
     title: "My Report Card",

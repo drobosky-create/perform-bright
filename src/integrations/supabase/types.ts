@@ -53,6 +53,51 @@ export type Database = {
         }
         Relationships: []
       }
+      documents: {
+        Row: {
+          content: Json | null
+          created_at: string
+          description: string | null
+          document_type: string
+          file_path: string | null
+          file_size: number | null
+          file_type: string | null
+          id: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: Json | null
+          created_at?: string
+          description?: string | null
+          document_type?: string
+          file_path?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: Json | null
+          created_at?: string
+          description?: string | null
+          document_type?: string
+          file_path?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       goal_metrics: {
         Row: {
           created_at: string

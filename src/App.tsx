@@ -18,6 +18,7 @@ import { SettingsPage } from "@/components/settings/SettingsPage";
 import { ReviewTemplates } from "@/components/settings/ReviewTemplates";
 import { ReportsPage } from "@/components/reports/ReportsPage";
 import { GoalsPage } from "@/components/goals/GoalsPage";
+import { DocumentsPage } from "@/components/documents/DocumentsPage";
 import { HowToPage } from "@/components/help/HowToPage";
 import { ReportCard } from "@/components/reports/ReportCard";
 import { GettingStartedGuide } from "@/components/help/guides/GettingStartedGuide";
@@ -113,6 +114,11 @@ const App = () => (
             <Route path="/goals" element={
               <ProtectedRoute>
                 <GoalsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/documents" element={
+              <ProtectedRoute>
+                <DocumentsPage />
               </ProtectedRoute>
             } />
             <Route path="/notifications" element={
