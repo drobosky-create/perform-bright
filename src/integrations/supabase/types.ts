@@ -509,6 +509,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_goal_progress_from_milestones: {
+        Args: { goal_id_param: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _user_id: string
